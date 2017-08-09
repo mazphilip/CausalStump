@@ -1,0 +1,158 @@
+
+source("kernel_classes.R")
+source("optimizer_classes.R")
+
+CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=5000,tol=1e-4,learning_rate=0.01,beta1=0.2,beta2=0.999,momentum=0.0){
+  #check dimensionality and class of X
+  check_inputs(y,X,z);
+  if(!missing(pscore)){ X = cbind(X, pscore); }
+  
+  p = ncol(X);
+  #normalize variables
+  norm_ret = norm_variables(y,X)
+  moments = norm_ret$moments; y = norm_ret$y; X = norm_ret$X;  
+  
+  
+  #list(m,v,parameters) = update_nadam(i,learnrate,beta1,beta2,eps,m,v,gradobj,parameters)
+  
+  #if not alternative weighting, use equal weights
+  if(missing(w)){ w = rep(1,n) }
+  
+  if(kernelfun == "SE") {
+    myKernel = KernelClass_SE$new(p = p,w = rep(1,n)) #object
+  } else if(kernelfun == "Matern52") {
+    myKernel = KernelClass_M52$new(p = p,w = rep(1,n)) #object
+  } ## extend if necessary
+  
+  #initialize parameters
+  myKernel$parainit(y);
+  
+  #select parameter
+  if((myoptim=="Adam") || (myoptim=="Nadam")){
+    if(myoptim=="Adam") {
+      myOptimizer = optAdam$new(lr = learning_rate, beta1 = beta1, beta2 = beta2)
+    } else {
+      myOptimizer = optNadam$new(lr = learning_rate, beta1 = beta1, beta2 = beta2)
+    }
+  } else if(myoptim=="GD" || myoptim=="Nesterov"){
+    if(myoptim=="GD"){ momentum=0.0 }  
+    myOptimizer = optNestorov$new(lr = learning_rate, momentum = momentum)
+  }
+  #set optimization variables
+  myOptimizer$initOpt(myKernel);
+  
+  #store statistics for plotting
+  stats = matrix(0,2,maxiter+2) #Evidence and RMSE
+  
+  for(iter in 1:maxiter){
+    #print(myKernel$parameters)
+    
+    stats[,iter+1] = myKernel$para_update(iter,y,X,z,myOptimizer)
+    
+    #tolerance missing
+    change = abs(stats[2,iter+1] - stats[2,iter])
+    if((change < tol)){ print("Stopped due to tolerance"); break; }
+  }
+  if(iter == maxiter){ print("Stopped due to maximum iterations reached") }
+  print("Final parameters")
+  print(myKernel$parameters)
+  #output changes
+  
+  #plot
+  par(mfrow=c(1,2))
+  plot(stats[2,3:(iter+1)],type="l",ylab="log Evidence",xlab="Iterations")
+  plot(stats[1,3:(iter+1)],type="l",ylab="RMSE",xlab="Iterations")
+  
+  list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z), class="CSobject") #generate S3 output class?
+}
+
+CS_fit = CausalStump(y,X2,z,maxiter=5000,learning_rate = 0.01,myoptim = "GD")
+
+predict_surface <- function(CSobject){
+  if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
+  
+  
+  
+}
+
+predict_treatment <- function(){
+  
+  
+}
+
+
+#gradient only one dimensional!  ----- solved for Nadam and GD
+#lambdam and lambdaanot converging, kernel?
+
+
+
+
+X2 = cbind(X,rnorm(120))
+X2 = data.frame(X2)
+
+kernmat_SE_cpp(X2, X2, z, z, myKernel$parameters)
+
+
+#sigma and sigma_z:works
+#lambdam: rmse goes down but evid as well
+#lambdaa: rmse goes down but evid as well
+#Lm: evid up then down, RMSE up
+#La: evid up, RMSE down then up
+#mu: works
+
+#kernel seems fine
+
+
+
+# kernel not the problem
+n2 = 3
+myKernel = KernelClass_SE$new(p = 2,w = rep(1,n2))
+myKernel$parainit(y)
+myKernel$parameters$sigma=0
+myKernel$parameters$sigma_z=0
+myKernel$parameters$lambdam=log(2)
+myKernel$parameters$lambdaa=log(2)
+myKernel$parameters
+X2 = data.frame(c(1,2,1.1))
+
+
+source("kernel_classes.R")
+source("optimizer_classes.R")
+
+
+
+## help functions ####
+norm_variables <- function(y,X){
+  p = ncol(X)
+  moments = list(meanX = rep(0,p),
+                 varX  = rep(1,p),
+                 meanY  = 0*mean(y), # we do not center the outcome surface
+                 varY  = var(y))
+  
+  #only normalize non-binary variables
+  nonbinary_varbs = unique(1:p * (apply(X,2,function(x) { all(na.omit(x) %in% 0:1) })==0))
+  nonbinary_varbs = nonbinary_varbs[nonbinary_varbs!=0]
+  
+  tmp = data.frame(X[,nonbinary_varbs])
+  
+  moments$meanX[nonbinary_varbs] = apply(tmp,2,mean)
+  moments$varX[nonbinary_varbs]  = sqrt(apply(tmp,2,var))
+  
+  y = (y - moments$meanY )/sqrt(moments$varY)
+  mynorm <- function(i){ (X[,i]-moments$meanX[i]) / sqrt(moments$varX[i]) }
+  X = data.frame(sapply(1:p,mynorm))
+  
+  list(moments = moments, y=y, X=X)
+}
+
+check_inputs <- function(y,X,z){
+  if(length(y) != nrow(X) ){
+    warning("y and X: nr of observations mismatch", call. = FALSE)
+  }
+  if(length(y) != length(z) ){
+    warning("y and z: nr of observations mismatch", call. = FALSE)
+  }
+  if(class(X) != "data.frame"){
+    warning("X is not of class data.frame", call. = FALSE)
+  }
+}
