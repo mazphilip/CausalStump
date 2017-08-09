@@ -3,7 +3,7 @@ source("R/utilities.R")
 source("R/kernel_classes.R")
 source("R/optimizer_classes.R")
 
-CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FALSE,maxiter=5000,tol=1e-4,learning_rate=0.01,beta1=0.2,beta2=0.999,momentum=0.0){
+CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FALSE,nu=200,maxiter=5000,tol=1e-4,learning_rate=0.01,beta1=0.2,beta2=0.999,momentum=0.0){
   #check dimensionality and class of X
   check_inputs(y,X,z);
   if(!missing(pscore)){ X = cbind(X, pscore); }
@@ -23,6 +23,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
     #} else if(kernelfun == "Matern52") {
     #  myKernel = KernelClass_TP_M52$new(p = p,w = rep(1,n)) #object
     #} ## extend if necessary
+      myKernel$parainit(y,nu);
   } else {
     #if(kernelfun == "SE") {
     print("GP")
@@ -30,11 +31,12 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
     #} else if(kernelfun == "Matern52") {
     #  myKernel = KernelClass_GP_M52$new(p = p,w = rep(1,n)) #object
     #} ## extend if necessary
+      myKernel$parainit(y);
   }
 
 
   #initialize parameters
-  myKernel$parainit(y);
+
 
   #select parameter
   if((myoptim=="Adam") || (myoptim=="Nadam")){
@@ -70,12 +72,10 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
   #generate kernel once more and final stats
   stats[,iter+2] = myKernel$get_train_stats(y,X,z)
 
-
-
   #plot
   par(mfrow=c(1,2))
   plot(stats[2,3:(iter+2)],type="l",ylab="log Evidence",xlab="Iterations")
-  plot(stats[1,3:(iter+2)],type="l",ylab="RMSE",xlab="Iterations",ylim=c(0,10))
+  plot(stats[1,3:(iter+2)],type="l",ylab="RMSE",xlab="Iterations",ylim=c(0,5))
 
   list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z)) #generate S3 output class? and use overloaded predict etc. ?
 }

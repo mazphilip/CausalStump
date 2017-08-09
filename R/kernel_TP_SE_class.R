@@ -13,14 +13,14 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                                w = "numeric",
                                                p = "numeric"),
                                  methods = list(
-                                   parainit = function(y) {
+                                   parainit = function(y,nu) {
 
                                      #for momentum and adam
                                      parameters <<- list(sigma=log(var(y)),
                                                          sigma_z=log(runif(1,min=1,max=2)),
                                                          lambdam=log(runif(1,min=0.2,max=1)),
-                                                         nu=log(10), #exp(nu)
-                                                         lambda0=log(runif(1,min=0.2,max=1)), #exp( lambda0)
+                                                         nu=log(nu), #exp(nu)
+                                                         lambda0=log(runif(1,min=0.1,max=0.7)), #exp( lambda0)
                                                          Lm=rep(-0.1,p),La=rep(0.1,p),
                                                          mu = mean(y)
                                                          )
@@ -58,14 +58,13 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      parameters <<- Optim$update(iter,parameters,gradients)
                                      mean_solution(y,z)
 
-                                     if(iter%%100 == 0){ cat(sprintf("%5d | log Evidence %9.4f | RMSE %9..4f \n", iter, stats[2], stats[1])) }
+                                     if(iter%%100 == 0){ cat(sprintf("%5d | log Evidence %9.4f | RMSE %9.4f \n", iter, stats[2], stats[1])) }
                                      get_train_stats(y,X,z)
                                      stats
                                    },
                                    get_train_stats = function(y,X,z){
                                      getinv_kernel(X,z);
 
-                                     #gradlist = grad_SE_cpp(y,as.matrix(X),z,w,Kmat,Km,Ka,invKmatn,parameters)
                                      stats = stats_TP_SE(y,Smat, invSmatn, parameters)
 
                                    },
@@ -83,7 +82,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      #map
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu) + parameters$mu
                                      cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z) )
-                                     cov = exp(parameters["lambda0"]) * cov #MORE ADJUSTMENT NEEDED
+                                     #cov = cov #MORE ADJUSTMENT NEEDED
 
                                      uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
                                      list(map=map,ci=uncentered_ci)
@@ -97,7 +96,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      #map
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu)
                                      cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z2) )
-                                     cov = exp(parameters["lambda0"]) * cov #MORE ADJUSTMENT NEEDED
+                                     #cov = exp(parameters["lambda0"]) * cov #MORE ADJUSTMENT NEEDED
 
                                      uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
                                      list(map=map,ci=uncentered_ci)

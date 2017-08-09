@@ -165,7 +165,6 @@ Rcpp::List grad_GP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
 
   //sigma_z
   dK.diag() = dK.diag() % z;
-  //Rcpp::Rcout << dK <<std::endl;
   gradients["sigma_z"] = evid_grad(tmpK, dK);
 
   //lambdam

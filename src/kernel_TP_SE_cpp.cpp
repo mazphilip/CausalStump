@@ -25,6 +25,7 @@ Rcpp::List evid_scale_gradients(arma::mat X, arma::mat tmpK,arma::mat Km,arma::m
   arma::mat tmpX(n,n);
   arma::mat tmpM(n,n);
   arma::mat tmpA(n,n);
+  //double lambda0 = exp( as<double>(parameters["lambda0"]) );
 
   for(unsigned int i=0; i<p; i++){
     //tmpX = abs(matrix(rep(X[,i],n),n,n) - t(matrix(rep(X[,i],n),n,n)))
@@ -43,17 +44,12 @@ Rcpp::List evid_scale_gradients(arma::mat X, arma::mat tmpK,arma::mat Km,arma::m
   return Rcpp::List::create(Named("m") = grad_m,Named("a") = grad_a );
 }
 
+// lambda0 instead of lambdaa but otherwise identical to GP
 // [[Rcpp::export]]
 Rcpp::List kernmat_TP_SE_cpp(Rcpp::NumericMatrix X1,Rcpp::NumericMatrix X2,Rcpp::NumericVector Z1,Rcpp::NumericVector Z2, Rcpp::List para) {
   //input X1,X2,Z1,Z2,parameters
 
-  //for(i in 1:p){
-  //  tmpX = (matrix(rep(X1[,i],n2),n1,n2) - t(matrix(rep(X2[,i],n1),n2,n1)))^2
-  //  Km        = Km        + tmpX        * exp(-parameters$Lm[i])
-  //  Ka[Zmask] = Ka[Zmask] + tmpX[Zmask] * exp(-parameters$La[i])
-  //}
-
-  unsigned int n1 = X1.nrow();
+    unsigned int n1 = X1.nrow();
   unsigned int n2 = X2.nrow();
   unsigned int p = X2.ncol();
 
@@ -72,27 +68,27 @@ Rcpp::List kernmat_TP_SE_cpp(Rcpp::NumericMatrix X1,Rcpp::NumericMatrix X2,Rcpp:
 
       tmpKm.row(r) += tmprow * exp(- Lm(i) );
       tmpKa.row(r) += tmprow * exp(- La(i) );
-
     }
   }
 
   double lambda_m = as<double>(para["lambdam"]);
-  //double lambda_a = as<double>(para["lambdaa"]);
+  double lambda0 = as<double>(para["lambda0"]);
 
   Rcpp::NumericMatrix tmpK(n1, n2);
 
   for(unsigned int r = 0; r < n1; r++){
     for(unsigned int c = 0; c < n2; c++){
-      tmpKm(r,c) = exp(lambda_m - tmpKm(r,c));
-      tmpKa(r,c) = exp( - tmpKa(r,c)) * Z1(r) * Z2(c); //"lambdaa" = 0
-      tmpK(r,c) = tmpKm(r,c) + tmpKa(r,c) ;
+
+      tmpKm(r,c) = exp(lambda_m - tmpKm(r,c)); //- lambda0
+      tmpKa(r,c) = exp(lambda0 - tmpKa(r,c)) * Z1(r) * Z2(c); //"lambdaa" = 0
+      tmpK(r,c)  = tmpKm(r,c) + tmpKa(r,c) ;
+
     }
   }
 
   //Put matrices in a list
   Rcpp::List out; out["Smat"] = tmpK; out["Sm"] = tmpKm; out["Sa"] = tmpKa;
   return(out);
-  //return 0;
 }
 
 // [[Rcpp::export]]
@@ -109,40 +105,31 @@ Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
   arma::mat tmpS(n,n);
   arma::mat dS(n,n);
 
-  /*
-  parameters <<- list(sigma=log(var(y)),
-                      sigma_z=log(runif(1,min=1,max=2)),
-                      lambdam=log(runif(1,min=0.2,max=1)),
-                      nu=log(runif(1,min=0.2,max=1)), #exp(nu)
-                        lambda0=log(runif(1,min=0.2,max=1)), #exp( lambda0)
-                        Lm=rep(-0.1,p),La=rep(0.1,p),
-                          mu = mean(y)
-  )*/
-
   double M_norm;
   double TP_adjust;
-  double lambda0 = exp( as<double>(parameters["lambda0"]));
-  double nu = exp( as<double>(parameters["nu"]));
+  double lambda0 = exp( as<double>(parameters["lambda0"]) );
+  double nu = exp( as<double>(parameters["nu"]) );
 
   ybar = y - as<double>(parameters["mu"]); // - parameters["mu_z"]
   alpha = invSmatn * ybar;
-  M_norm = arma::dot(ybar, alpha) / lambda0;
-  TP_adjust = (nu + n) / ((nu + M_norm) * lambda0 );
-  tmpS = invSmatn - TP_adjust * alpha * alpha.t();
+  M_norm = arma::dot(ybar,alpha);
+  TP_adjust = ( nu + n ) / ( (nu + M_norm) * lambda0 ) ;
+  //Rcpp::Rcout << M_norm << std::endl;
+  tmpS = (invSmatn - TP_adjust * alpha * alpha.t());
 
   //mu - gradient approach
-  gradients["mu"] = TP_adjust * arma::sum( invSmatn * ybar );
+  gradients["mu"] = 0 * TP_adjust * arma::sum( invSmatn * ybar ) ;
 
   //nu
-  gradients["nu"] = 0 * 0.5*boost::math::digamma( 0.5*(as<double>(parameters["nu"])+n) ) - 0.5*boost::math::digamma( 0.5*as<double>(parameters["nu"]) ) - 0.5*( ((n - M_norm)/(nu + M_norm))  + log(nu + M_norm) - log(nu) );
+  gradients["nu"] = 0 * (boost::math::digamma( 0.5*(nu+n) ) - boost::math::digamma( 0.5*nu ) - 0.5*( ((n - M_norm)/(nu + M_norm))  + log(1 + M_norm/nu) ));
 
-  //lambda0
-  gradients["lambda0"] = - 0.5* lambda0 * (nu * (n - M_norm) )/(lambda0 * (nu + M_norm)) ;
+  //lambda0 - similar as lambdaa for GP, when considering that hatlambdam cancels out
+  gradients["lambda0"] = evid_grad(tmpS, Sa);
 
   //Same as for GP
   //sigma
-  dS = arma::diagmat( exp( as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) % w );
-  gradients["sigma"] = evid_grad(tmpS, dS);
+  dS = arma::diagmat(  exp(as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) );
+  gradients["sigma"] =  evid_grad(tmpS, dS);
 
   //sigma_z
   dS.diag() = dS.diag() % z;
@@ -163,8 +150,8 @@ Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
   double val;
   double sign;
   arma::log_det(val,sign,invSmatn);  //logdet of INVERSE -> -val
-  stats(1) = lgamma( 0.5*(nu+n) ) - lgamma( 0.5 * nu) - 0.5 * (n * log(nu  * arma::datum::pi ) - val + n * log(lambda0) + (n + nu) * ( 1 + M_norm/nu ) );
-
+  //stats(1) = lgamma( 0.5*(nu+n) ) - lgamma( 0.5 * nu) - 0.5 * (n * log(nu  * arma::datum::pi ) - val + n * log(lambda0) + (n + nu) * ( 1 + M_norm/nu ) );
+  stats(1) = - 0.5 * (n * log( 2.0 * arma::datum::pi ) - val + arma::dot( ybar, alpha ) ) ;
   //output
   return Rcpp::List::create(Named("gradients") = gradients,Named("stats") = stats );
 }
@@ -178,12 +165,13 @@ arma::rowvec stats_TP_SE(arma::colvec y, arma::mat Kmat, arma::mat invKmatn, Rcp
   arma::rowvec stats(2);
   arma::colvec ybar(n);
   arma::colvec alpha(n);
-  double lambda0 = exp( as<double>(parameters["lambda0"]));
-  double nu = exp( as<double>(parameters["nu"]));
-  double M_norm = arma::dot(ybar, alpha) / lambda0;
 
   ybar = y - as<double>(parameters["mu"]); // - parameters["mu_z"]
   alpha = invKmatn * ybar;
+
+  double lambda0 = exp( as<double>(parameters["lambda0"]));
+  double nu = exp( as<double>(parameters["nu"]));
+  double M_norm = pow(arma::norm(ybar-alpha,2),2) / lambda0;
 
   //RMSE
   stats(0) = pow(arma::norm(y - (Kmat * alpha + as<double>(parameters["mu"]))),2);
@@ -192,7 +180,8 @@ arma::rowvec stats_TP_SE(arma::colvec y, arma::mat Kmat, arma::mat invKmatn, Rcp
   double val;
   double sign;
   arma::log_det(val,sign,invKmatn);  //logdet of INVERSE -> -val
-  stats(1) = lgamma( 0.5*(nu+n) ) - lgamma( 0.5 * nu) - 0.5 * (n * log(nu  * arma::datum::pi ) - val + n * log(lambda0) + (n + nu) * ( 1 + M_norm/nu ) );
+  stats(1) = - 0.5 * (n * log( 2.0 * arma::datum::pi ) - val + arma::dot( ybar, alpha ) ) ;
+  //stats(1) = lgamma( 0.5*(nu+n) ) - lgamma( 0.5 * nu) - 0.5 * (n * log(nu  * arma::datum::pi ) - val + n * log(lambda0) + (n + nu) * ( 1 + M_norm/nu ) );
 
   return stats;
 }
