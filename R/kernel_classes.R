@@ -69,9 +69,20 @@ KernelClass_SE <- setRefClass("SqExpKernel",
     },
     mean_solution = function(y,z){
       #means using analytic solution
-      mu = mu_solution_cpp(y, z,invKmatn,parameters)
+      mu = mu_solution_cpp(y, z, invKmatn, parameters)
       parameters$mu <<- mu #mu[[1]]; #parameters$mu_z <<- 0*mu[[2]]
       parameters <<- parameters
+    },
+    predict = function(y,X,z,y2,X2,z2){
+
+      K_xX = kernel_mat(X2,X,z2,z)$Kmat
+      K_xx = kernel_mat(X2,X2,z2,z2)$Kmat
+
+      #map
+      map = K_xX %*% invKmatn %*% (y - parameters$mu) + parameters$mu
+      cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z) )
+      uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
+      list(map=map,ci=uncentered_ci)
     }
     )
 )
