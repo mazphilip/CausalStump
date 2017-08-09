@@ -35,7 +35,6 @@ KernelClass_SE <- setRefClass("SqExpKernel",
     getinv_kernel = function(X,z) {
       #get matrices and return inverse for prediction, maybe return Ka in a later stage
 
-
       #get new kernel and invert with noise
       Klist = kernel_mat(X,X,z,z);
 
@@ -58,8 +57,15 @@ KernelClass_SE <- setRefClass("SqExpKernel",
       mean_solution(y,z)
 
       if(iter%%100 == 0){ cat(sprintf("%5d | log Evidence %9.4f | RMSE %9..4f \n", iter, stats[2], stats[1])) }
-
+      get_train_stats(y,X,z)
       stats
+    },
+    get_train_stats = function(y,X,z){
+      getinv_kernel(X,z);
+
+      #gradlist = grad_SE_cpp(y,as.matrix(X),z,w,Kmat,Km,Ka,invKmatn,parameters)
+      stats = stats_SE(y,Kmat, invKmatn, parameters)
+
     },
     mean_solution = function(y,z){
       #means using analytic solution

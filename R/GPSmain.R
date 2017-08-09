@@ -13,8 +13,6 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   norm_ret = norm_variables(y,X)
   moments = norm_ret$moments; y = norm_ret$y; X = norm_ret$X;
 
-  #list(m,v,parameters) = update_nadam(i,learnrate,beta1,beta2,eps,m,v,gradobj,parameters)
-
   #if not alternative weighting, use equal weights
   if(missing(w)){ w = rep(1,n) }
 
@@ -58,21 +56,37 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   print(myKernel$parameters)
   #output changes
 
+  #generate kernel once more and final stats
+  stats[,iter+2] = myKernel$get_train_stats(y,X,z)
+
+
+
   #plot
   par(mfrow=c(1,2))
-  plot(stats[2,3:(iter+1)],type="l",ylab="log Evidence",xlab="Iterations")
-  plot(stats[1,3:(iter+1)],type="l",ylab="RMSE",xlab="Iterations")
+  plot(stats[2,3:(iter+2)],type="l",ylab="log Evidence",xlab="Iterations")
+  plot(stats[1,3:(iter+2)],type="l",ylab="RMSE",xlab="Iterations")
 
   list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z), class="CSobject") #generate S3 output class?
 }
 
 CS_fit = CausalStump(y,X2,z,maxiter=5000,learning_rate = 0.01,myoptim = "GD")
 
-predict_surface <- function(CSobject){
+
+
+predict_surface <- function(y2,X2,z2,CSobject){
+  check_inputs(y2,X2,z2);
   if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
 
+  #normalize the non-binary variables
+  norm_ret = norm_variables(y,X,CSobject$moments)
+  y2 = norm_ret$y; X2 = norm_ret$X;
 
 
+  #map
+  map = moments$meanY + sqrt(moments$varY) * K_xX * invKmat
+
+
+  list(map = ,ci = )
 }
 
 predict_treatment <- function(){
