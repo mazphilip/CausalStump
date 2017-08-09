@@ -2,7 +2,7 @@ require(Rcpp)
 require(RcppArmadillo)
 sourceCpp("src/kernel_SE_cpp.cpp")
 
-KernelClass_SE <- setRefClass("SqExpKernel",
+KernelClass_GP_SE <- setRefClass("SqExpKernel",
   fields = list(parameters = "list",
                 invKmatn = "matrix",
                 Kmat = "matrix",
@@ -73,7 +73,7 @@ KernelClass_SE <- setRefClass("SqExpKernel",
       parameters$mu <<- mu #mu[[1]]; #parameters$mu_z <<- 0*mu[[2]]
       parameters <<- parameters
     },
-    predict = function(y,X,z,y2,X2,z2){
+    predict = function(y,X,z,X2,z2){
 
       K_xX = kernel_mat(X2,X,z2,z)$Kmat
       K_xx = kernel_mat(X2,X2,z2,z2)$Kmat
@@ -81,6 +81,18 @@ KernelClass_SE <- setRefClass("SqExpKernel",
       #map
       map = K_xX %*% invKmatn %*% (y - parameters$mu) + parameters$mu
       cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z) )
+      uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
+      list(map=map,ci=uncentered_ci)
+    },
+    predict_treat = function(y,X,z,X2){
+      z2 = rep(1,n)
+
+      K_xX = kernel_mat(X2,X,z2,z)$Ka
+      K_xx = kernel_mat(X2,X2,z2,z2)$Ka
+
+      #map
+      map = K_xX %*% invKmatn %*% (y - parameters$mu)
+      cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z2) )
       uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
       list(map=map,ci=uncentered_ci)
     }

@@ -3,7 +3,7 @@ source("R/utilities.R")
 source("R/kernel_classes.R")
 source("R/optimizer_classes.R")
 
-CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=5000,tol=1e-4,learning_rate=0.01,beta1=0.2,beta2=0.999,momentum=0.0){
+CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FALSE,maxiter=5000,tol=1e-4,learning_rate=0.01,beta1=0.2,beta2=0.999,momentum=0.0){
   #check dimensionality and class of X
   check_inputs(y,X,z);
   if(!missing(pscore)){ X = cbind(X, pscore); }
@@ -12,15 +12,24 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   #normalize variables
   norm_ret = norm_variables(y,X)
   moments = norm_ret$moments; y = norm_ret$y; X = norm_ret$X;
-  print(moments$varY)
+
   #if not alternative weighting, use equal weights
   if(missing(w)){ w = rep(1,n) }
 
-  if(kernelfun == "SE") {
-    myKernel = KernelClass_SE$new(p = p,w = rep(1,n)) #object
-  } else if(kernelfun == "Matern52") {
-    myKernel = KernelClass_M52$new(p = p,w = rep(1,n)) #object
-  } ## extend if necessary
+  if(prior==TRUE){
+    #if(kernelfun == "SE") {
+      myKernel = KernelClass_TP_SE$new(p = p,w = rep(1,n)) #object
+    #} else if(kernelfun == "Matern52") {
+    #  myKernel = KernelClass_TP_M52$new(p = p,w = rep(1,n)) #object
+    #} ## extend if necessary
+  } else {
+    #if(kernelfun == "SE") {
+      myKernel = KernelClass_GP_SE$new(p = p,w = rep(1,n)) #object
+    #} else if(kernelfun == "Matern52") {
+    #  myKernel = KernelClass_GP_M52$new(p = p,w = rep(1,n)) #object
+    #} ## extend if necessary
+  }
+
 
   #initialize parameters
   myKernel$parainit(y);
@@ -69,25 +78,23 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z)) #generate S3 output class? and use overloaded predict etc. ?
 }
 
-CS_fit = CausalStump(y,X2,z,maxiter=5000,learning_rate = 0.01,myoptim = "GD")
-
-predict_surface <- function(y,X,z,CSobject){
+predict_surface <- function(X,z,CSobject,pscore){
   #this function returns the prediction for the fitted Gaussian process
   #only includes calculations with the new data
+  if(!missing(pscore)){ X = cbind(X, pscore); }
 
   #if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
-  n = length(y);
+  n = nrow(X);
   #this makes it easier to plot both surfaces
   if(length(z)==1){ z = rep(z,n) }
 
-  check_inputs(y,X,z);
+  #check_inputs(y,X,z);
 
   #normalize the non-binary variables
-  norm_ret = norm_variables(y,X,CSobject$moments)
-  y = norm_ret$y; X = norm_ret$X;
+  X = norm_variables(X = X,moments = CSobject$moments)$X
 
   #remaining kernel calculations using the kernel class method
-  pred_list = CSobject$Kernel$predict(CSobject$train_data$y,CSobject$train_data$X,CSobject$train_data$z,y,X,z)
+  pred_list = CSobject$Kernel$predict(CSobject$train_data$y,CSobject$train_data$X,CSobject$train_data$z,X,z)
 
   #add the moments
   map = CSobject$moments$meanY + sqrt(CSobject$moments$varY) * pred_list$map
@@ -96,54 +103,25 @@ predict_surface <- function(y,X,z,CSobject){
   list(map = map,ci = ci)
 }
 
+predict_treatment <- function(X,CSobject,pscore){
+  #this function returns the prediction for the fitted Gaussian process
+  #only includes calculations with the new data
+  if(!missing(pscore)){ X = cbind(X, pscore); }
 
-CS_pred = predict_surface(y,X2,z,CS_fit)
-#CS_pred1 = predict_surface(y,X2,1,CS_fit)
-par(mfrow=c(1,1))
-plot(X[,1],CS_pred$map,ylim=c(7,15))
-lines(X.sort,CS_pred$ci[mysort$ix,1])
-lines(X.sort,CS_pred$ci[mysort$ix,2])
+  #if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
+  n = nrow(X);
 
-#points(X[,1],CS_pred1$map)
+  #check_inputs(X,z);
 
+  #normalize the non-binary variables
+  X = norm_variables(X = X,moments = CSobject$moments)$X
 
+  #remaining kernel calculations using the kernel class method
+  pred_list = CSobject$Kernel$predict_treat(CSobject$train_data$y,CSobject$train_data$X,CSobject$train_data$z,X)
 
-predict_treatment <- function(){
+  #add the moments
+  map = CSobject$moments$meanY + sqrt(CSobject$moments$varY) * pred_list$map
+  ci = CSobject$moments$varY * pred_list$ci+ cbind(map,map) #change to broadcasting
 
-
+  list(map = map,ci = ci)
 }
-
-
-#gradient only one dimensional!  ----- solved for Nadam and GD
-#lambdam and lambdaanot converging, kernel?
-
-
-
-
-X2 = cbind(X,rnorm(120))
-X2 = data.frame(X2)
-
-kernmat_SE_cpp(X2, X2, z, z, myKernel$parameters)
-
-
-#sigma and sigma_z:works
-#lambdam: rmse goes down but evid as well
-#lambdaa: rmse goes down but evid as well
-#Lm: evid up then down, RMSE up
-#La: evid up, RMSE down then up
-#mu: works
-
-#kernel seems fine
-
-
-
-# kernel not the problem
-n2 = 3
-myKernel = KernelClass_SE$new(p = 2,w = rep(1,n2))
-myKernel$parainit(y)
-myKernel$parameters$sigma=0
-myKernel$parameters$sigma_z=0
-myKernel$parameters$lambdam=log(2)
-myKernel$parameters$lambdaa=log(2)
-myKernel$parameters
-X2 = data.frame(c(1,2,1.1))

@@ -17,13 +17,15 @@ norm_variables <- function(y,X,moments){
     moments$meanX[nonbinary_varbs] = apply(tmp,2,mean)
     moments$varX[nonbinary_varbs]  = apply(tmp,2,var)
   }
-
-  y = (y - moments$meanY )/sqrt(moments$varY)
   mynorm <- function(i){ (X[,i]-moments$meanX[i]) / sqrt(moments$varX[i]) }
-
   X = data.frame(sapply(1:p,mynorm))
-
-  list(moments = moments, y=y, X=X)
+  if(missing(y)){
+    out = list(X=X)
+  } else {
+    y = (y - moments$meanY ) / sqrt(moments$varY)
+    out = list(moments=moments, y=y, X=X)
+  }
+  out
 }
 
 check_inputs <- function(y,X,z){
