@@ -66,28 +66,54 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   plot(stats[2,3:(iter+2)],type="l",ylab="log Evidence",xlab="Iterations")
   plot(stats[1,3:(iter+2)],type="l",ylab="RMSE",xlab="Iterations")
 
-  list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z), class="CSobject") #generate S3 output class?
+  list(class="CSobject",Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z)) #generate S3 output class?
 }
 
 CS_fit = CausalStump(y,X2,z,maxiter=5000,learning_rate = 0.01,myoptim = "GD")
 
 
 
-predict_surface <- function(y2,X2,z2,CSobject){
-  check_inputs(y2,X2,z2);
-  if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
+
+
+predict_surface <- function(y,X,z,CSobject){
+  #this function returns the prediction for the fitted Gaussian process
+  #only includes calculations with the new data
+
+  #if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
+  n = length(y);
+  #this makes it easier to plot both surfaces
+  if(length(z)==1){ z = rep(z,n) }
+
+  check_inputs(y,X,z);
+
+
 
   #normalize the non-binary variables
   norm_ret = norm_variables(y,X,CSobject$moments)
-  y2 = norm_ret$y; X2 = norm_ret$X;
+  y = norm_ret$y; X = norm_ret$X;
 
+  #remaining kernel calculations
+  K_xX = (CSobject$Kernel$kernel_mat(X,CSobject$train_data$X,z,CSobject$train_data$z));
+  K_xX = K_xX$Kmat
+  K_xx = (CSobject$Kernel$kernel_mat(X,X,z,z));
+  K_xx = K_xx$Kmat
 
   #map
-  map = moments$meanY + sqrt(moments$varY) * K_xX * invKmat
+  map = moments$meanY + sqrt(moments$varY) * K_xX %*% CSobject$Kernel$invKmatn %*% (CSobject$train_data$y - CSobject$Kernel$parameters$mu)
 
+  cov = sqrt(moments$varY) *(K_xx - K_xX %*% CSobject$Kernel$invKmatn %*% t(K_xX) )
+  predvar = diag(cov);
 
-  list(map = ,ci = )
+  list(map = map,ci = cbind(map-1.96*sqrt(predvar),map+1.96*sqrt(predvar)))
 }
+
+#CS_pred0 = predict_surface(y,X2,0,CS_fit)
+#CS_pred1 = predict_surface(y,X2,1,CS_fit)
+#par(mfrow=c(1,1))
+#plot(X[,1],CS_pred0$map,ylim=c(40,140))
+#points(X[,1],CS_pred1$map)
+
+
 
 predict_treatment <- function(){
 
