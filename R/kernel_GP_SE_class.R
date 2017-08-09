@@ -31,7 +31,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      X1 = as.matrix(X1); #otherwise I need to rewrite the kernel function
                                      X2 = as.matrix(X2);
 
-                                     Klist = kernmat_SE_cpp(X1,X2,z1,z2,parameters)
+                                     Klist = kernmat_GP_SE_cpp(X1,X2,z1,z2,parameters)
 
                                    },
                                    getinv_kernel = function(X,z) {
@@ -51,7 +51,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      #update Kmat and invKmat in the class environment
                                      getinv_kernel(X,z);
 
-                                     gradlist = grad_SE_cpp(y,as.matrix(X),z,w,Kmat,Km,Ka,invKmatn,parameters)
+                                     gradlist = grad_GP_SE_cpp(y,as.matrix(X),z,w,Kmat,Km,Ka,invKmatn,parameters)
                                      gradients = gradlist$gradients; stats = gradlist$stats
                                      #gradients$Lm = as.numeric(gradients$Lm)
                                      #gradients$La = as.numeric(gradients$La)
@@ -66,7 +66,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      getinv_kernel(X,z);
 
                                      #gradlist = grad_SE_cpp(y,as.matrix(X),z,w,Kmat,Km,Ka,invKmatn,parameters)
-                                     stats = stats_SE(y,Kmat, invKmatn, parameters)
+                                     stats = stats_GP_SE(y,Kmat, invKmatn, parameters)
 
                                    },
                                    mean_solution = function(y,z){

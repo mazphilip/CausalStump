@@ -71,7 +71,7 @@ double mu_solution_cpp(arma::colvec y, arma::colvec z, arma::mat invKmat, Rcpp::
 }
 
 // [[Rcpp::export]]
-Rcpp::List kernmat_SE_cpp(Rcpp::NumericMatrix X1,Rcpp::NumericMatrix X2,Rcpp::NumericVector Z1,Rcpp::NumericVector Z2, Rcpp::List para) {
+Rcpp::List kernmat_GP_SE_cpp(Rcpp::NumericMatrix X1,Rcpp::NumericMatrix X2,Rcpp::NumericVector Z1,Rcpp::NumericVector Z2, Rcpp::List para) {
   //input X1,X2,Z1,Z2,parameters
 
   //for(i in 1:p){
@@ -142,7 +142,7 @@ Rcpp::List kernmat_SE_cpp(Rcpp::NumericMatrix X1,Rcpp::NumericMatrix X2,Rcpp::Nu
 
 
 // [[Rcpp::export]]
-Rcpp::List grad_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colvec w, arma::mat Kmat, arma::mat Km, arma::mat Ka, arma::mat invKmatn, Rcpp::List parameters) {
+Rcpp::List grad_GP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colvec w, arma::mat Kmat, arma::mat Km, arma::mat Ka, arma::mat invKmatn, Rcpp::List parameters) {
   Rcpp::List gradients = clone(parameters); //for the same list structure
 
   unsigned int n = X.n_rows;
@@ -204,7 +204,7 @@ Rcpp::List grad_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colvec 
 }
 
 // [[Rcpp::export]]
-arma::rowvec stats_SE(arma::colvec y, arma::mat Kmat, arma::mat invKmatn, Rcpp::List parameters) {
+arma::rowvec stats_GP_SE(arma::colvec y, arma::mat Kmat, arma::mat invKmatn, Rcpp::List parameters) {
   Rcpp::List gradients = clone(parameters); //for the same list structure
 
   unsigned int n = y.size();
