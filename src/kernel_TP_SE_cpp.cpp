@@ -137,8 +137,8 @@ Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
 
   //Same as for GP
   //sigma
-  dS = arma::diagmat(  exp(as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) );
-  gradients["sigma"] =  evid_grad(tmpS, dS);
+  dS = arma::diagmat( exp(as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) );
+  gradients["sigma"] = evid_grad(tmpS, dS);
 
   //sigma_z
   dS.diag() = dS.diag() % z;
