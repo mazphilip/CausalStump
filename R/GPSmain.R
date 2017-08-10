@@ -18,7 +18,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
 
   if(prior==TRUE){
     #if(kernelfun == "SE") {
-    print("TP")
+    print("Fitting the Student-t Process")
       myKernel = KernelClass_TP_SE$new(p = p,w = rep(1,n)) #object
     #} else if(kernelfun == "Matern52") {
     #  myKernel = KernelClass_TP_M52$new(p = p,w = rep(1,n)) #object
@@ -26,7 +26,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
       myKernel$parainit(y,nu);
   } else {
     #if(kernelfun == "SE") {
-    print("GP")
+    print("Fitting the Gaussian process")
       myKernel = KernelClass_GP_SE$new(p = p,w = rep(1,n)) #object
     #} else if(kernelfun == "Matern52") {
     #  myKernel = KernelClass_GP_M52$new(p = p,w = rep(1,n)) #object

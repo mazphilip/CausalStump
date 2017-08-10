@@ -11,11 +11,15 @@ norm_variables <- function(y,X,moments){
     #only normalize non-binary variables
     nonbinary_varbs = unique(1:p * (apply(X,2,function(x) { all(na.omit(x) %in% 0:1) })==0))
     nonbinary_varbs = nonbinary_varbs[nonbinary_varbs!=0]
+    within_unit_circle = unique(1:p * apply(Xp,2,function(x) { all(na.omit(x)<=1 & na.omit(x)>=0 ) }) )
+    within_unit_circle = within_unit_circle[within_unit_circle!=0]
 
-    tmp = data.frame(X[,nonbinary_varbs])
+    normalize_varbs = setdiff(nonbinary_varbs,within_unit_circle)
 
-    moments$meanX[nonbinary_varbs] = apply(tmp,2,mean)
-    moments$varX[nonbinary_varbs]  = apply(tmp,2,var)
+    tmp = data.frame(X[,normalize_varbs])
+
+    moments$meanX[normalize_varbs] = apply(tmp,2,mean)
+    moments$varX[normalize_varbs]  = apply(abs(tmp),2,max)
   }
   mynorm <- function(i){ (X[,i]-moments$meanX[i]) / sqrt(moments$varX[i]) }
   X = data.frame(sapply(1:p,mynorm))
