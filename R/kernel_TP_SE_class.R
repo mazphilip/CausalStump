@@ -4,6 +4,8 @@ require(RcppArmadillo)
 sourceCpp("src/kernel_TP_SE_cpp.cpp")
 #Using some prior-invariant functions from the GP cpp file:
 sourceCpp("src/kernel_GP_SE_cpp.cpp")
+require(mvnfast)
+
 
 KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                  fields = list(parameters = "list",
@@ -85,16 +87,25 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z) )
                                      #in current specification, includes already lamnbda0
                                      #want:
-                                     ybar = y - parameters$mu;
+                                     #ybar = y - parameters$mu;
                                      #using the mode of the sampled credible interval
-                                     mode = c( exp(parameters$nu + parameters$lambda0)) / (c(exp(parameters$nu)) + 2)
-                                     sqrt_var = sqrt( diag(cov) / mode );
+                                     #mode = c( exp(parameters$nu + parameters$lambda0)) / (c(exp(parameters$nu)) + 2)
+                                     #sqrt_var = sqrt( diag(cov) / mode );
 
-                                     uncentered_ci = cbind(-1.96 * sqrt_var,1.96 * sqrt_var )
-                                     list(map=map,ci=uncentered_ci)
+                                     #uncentered_ci = cbind(-1.96 * sqrt_var,1.96 * sqrt_var )
+                                     N_sample = 10000
+
+                                     TP_samples = mvnfast::rmvt(N_sample, mu = map,  sigma = cov, df = c(exp(parameters$n)) )
+                                     #symmetric,
+                                     TP_samples = t(apply(TP_samples, 1, function(x) abs(x-map) ))
+
+                                     U = apply(TP_samples,2,sort)[floor(N_sample*0.95),] #floor has a faster convergence as samples denser
+
+                                     list(map=map,ci=c(-U,U))
                                    },
                                    predict_treat = function(y,X,z,X2){ #NEED CHANGE
                                      n = length(y);
+                                     n2 = nrow(X2);
                                      z2 = rep(1,n)
 
                                      S_xX = kernel_mat(X2,X,z2,z)$Sa
@@ -102,18 +113,28 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
 
                                      #map
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu)
-                                     cov = (S_xx - S_xX %*% invSmatn %*% t(S_xX)) / c(exp(parameters$lambda0))
+                                     ate = mean(map);
 
-                                     ybar = y - parameters$mu;
+                                     #ci
                                      #median_lambdaa = qinvgamma(0.5, shape = c(exp(parameters$nu))/2, rate = c(exp(parameters$nu))/2 )
                                      #using the mode of the sampled credible interval
-                                     mode = c( exp(parameters$nu + parameters$lambda0)) / (c(exp(parameters$nu)) + 2)
-                                     sqrt_var = sqrt( diag(cov) / mode );
 
-                                     #cov = exp(parameters["lambda0"]) * cov #MORE ADJUSTMENT NEEDED
+                                     #mode = c( exp(parameters$nu)) / (c(exp(parameters$nu)) + 2)
+                                     cov = ( S_xx - S_xX %*% invSmatn %*% t(S_xX) + exp(parameters$sigma_z) * diag(n2);
+                                     #ate_cov = sum(sum(cov))/(n^2);
+                                     N_sample = 10000
 
-                                     uncentered_ci = cbind(-1.96 * sqrt_var, 1.96 * sqrt_var)
-                                     list(map=map,ci=uncentered_ci)
+                                     TP_samples = mvnfast::rmvt(N_sample, mu = map,  sigma = cov, df = c(exp(parameters$n)) )
+                                     #symmetric,
+                                     TP_samples = t(apply(TP_samples, 1, function(x) abs(x-map) ))
+                                     U = apply(TP_samples,2,sort)[floor(N_sample*0.95),] #floor has a faster convergence as samples denser
+
+                                     ate_U = sort(apply(TP_samples,1,mean))[floor(1000*0.95)]
+
+                                     #sqrt_var = sqrt( diag(cov) );
+                                     #uncentered_ci = cbind(-1.96 * sqrt_var, 1.96 * sqrt_var)
+                                     #ate_uncentered_ci = cbind(-1.96 * sqrt(ate_cov), 1.96 * sqrt(ate_cov) )
+                                     list(map = map,ci = c(-U,U),ate_map = ate , ate_ci = c(-ate_U,ate_U))
                                    }
                                  )
 )

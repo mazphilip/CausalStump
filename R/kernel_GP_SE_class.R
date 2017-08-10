@@ -87,16 +87,23 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      list(map=map,ci=uncentered_ci)
                                    },
                                    predict_treat = function(y,X,z,X2){
-                                     z2 = rep(1,n)
+                                     n2 = nrow(X2)
+                                     z2 = rep(1,n2)
 
                                      K_xX = kernel_mat(X2,X,z2,z)$Ka
                                      K_xx = kernel_mat(X2,X2,z2,z2)$Ka
 
                                      #map
                                      map = K_xX %*% invKmatn %*% (y - parameters$mu)
-                                     cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z2) )
+                                     ate = mean(map);
+
+                                     #ci
+                                     cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + exp(parameters$sigma_z) * diag(n2)
                                      uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
-                                     list(map=map,ci=uncentered_ci)
+                                     ate_cov = sum(sum(cov))/(n^2);
+                                     ate_uncentered_ci = cbind( -1.96 * sqrt(ate_cov), 1.96 * sqrt(ate_cov) )
+
+                                     list(map=map,ci=uncentered_ci,ate_map = ate , ate_ci =  ate_uncentered_ci)
                                    }
                                  )
 )
