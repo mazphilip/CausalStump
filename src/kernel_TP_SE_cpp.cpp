@@ -130,7 +130,7 @@ Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
   gradients["mu"] =  TP_adjust * arma::sum( invSmatn * ybar ) ;
 
   //nu
-  gradients["nu"] =  0;//0.5 * nu * (2*boost::math::digamma( 0.5*(nu+n) ) - 2*boost::math::digamma( 0.5*nu ) - ( ((n - M_norm)/(nu + M_norm))  + log(1 + M_norm/nu) ));
+  gradients["nu"] =  0.0; // 0.5 * nu * (2*boost::math::digamma( 0.5*(nu+n) ) - 2*boost::math::digamma( 0.5*nu ) - ( ((n - M_norm)/(nu + M_norm))  + log(1 + M_norm/nu) ));
 
   //lambda0 - similar as lambdaa for GP, when considering that hatlambdam cancels out
   gradients["lambda0"] = evid_grad(tmpS, Sa);

@@ -1,12 +1,13 @@
 require(Rcpp)
 require(RcppArmadillo)
+#require(invgamma)
 sourceCpp("src/kernel_TP_SE_cpp.cpp")
 #Using some prior-invariant functions from the GP cpp file:
 sourceCpp("src/kernel_GP_SE_cpp.cpp")
 
 KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                  fields = list(parameters = "list",
-                                               invSmatn = "matrix", #unscaled kernel matrices Sigma "S"
+                                               invSmatn = "matrix", #prior-scaled kernel matrices "lambda_0 * Sigma"
                                                Smat = "matrix",
                                                Sm = "matrix",
                                                Sa = "matrix",
@@ -82,12 +83,18 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      #map
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu) + parameters$mu
                                      cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z) )
-                                     #cov = cov #MORE ADJUSTMENT NEEDED
+                                     #in current specification, includes already lamnbda0
+                                     #want:
+                                     ybar = y - parameters$mu;
+                                     #using the mode of the sampled credible interval
+                                     mode = c( exp(parameters$nu + parameters$lambda0)) / (c(exp(parameters$nu)) + 2)
+                                     sqrt_var = sqrt( diag(cov) / mode );
 
-                                     uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
+                                     uncentered_ci = cbind(-1.96 * sqrt_var,1.96 * sqrt_var )
                                      list(map=map,ci=uncentered_ci)
                                    },
                                    predict_treat = function(y,X,z,X2){ #NEED CHANGE
+                                     n = length(y);
                                      z2 = rep(1,n)
 
                                      S_xX = kernel_mat(X2,X,z2,z)$Sa
@@ -95,10 +102,17 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
 
                                      #map
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu)
-                                     cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z2) )
+                                     cov = (S_xx - S_xX %*% invSmatn %*% t(S_xX)) / c(exp(parameters$lambda0))
+
+                                     ybar = y - parameters$mu;
+                                     #median_lambdaa = qinvgamma(0.5, shape = c(exp(parameters$nu))/2, rate = c(exp(parameters$nu))/2 )
+                                     #using the mode of the sampled credible interval
+                                     mode = c( exp(parameters$nu + parameters$lambda0)) / (c(exp(parameters$nu)) + 2)
+                                     sqrt_var = sqrt( diag(cov) / mode );
+
                                      #cov = exp(parameters["lambda0"]) * cov #MORE ADJUSTMENT NEEDED
 
-                                     uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
+                                     uncentered_ci = cbind(-1.96 * sqrt_var, 1.96 * sqrt_var)
                                      list(map=map,ci=uncentered_ci)
                                    }
                                  )
