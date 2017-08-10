@@ -3,7 +3,7 @@ source("R/utilities.R")
 source("R/kernel_classes.R")
 source("R/optimizer_classes.R")
 
-CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FALSE,nu=200,maxiter=5000,tol=1e-4,learning_rate=0.01,beta1=0.2,beta2=0.999,momentum=0.0){
+CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FALSE,nu=200,maxiter=5000,tol=1e-4,learning_rate=0.01,beta1=0.9,beta2=0.999,momentum=0.0){
   #check dimensionality and class of X
   check_inputs(y,X,z);
   if(!missing(pscore)){ X = cbind(X, pscore); }
@@ -62,7 +62,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
 
     #tolerance missing
     change = abs(stats[2,iter+1] - stats[2,iter])
-    if((change < tol)){ print("Stopped due to tolerance"); break; }
+    if((change < tol) && (iter > 3)){ print("Stopped due to tolerance"); break; }
   }
   if(iter == maxiter){ print("Stopped due to maximum iterations reached") }
   print("Final parameters")

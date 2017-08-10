@@ -1,6 +1,7 @@
 // [[Rcpp::depends("RcppArmadillo")]]
 #include <RcppArmadillo.h>
 #include <boost/math/special_functions/digamma.hpp>
+#include <boost/math/distributions/inverse_gamma.hpp>
 #include <cmath>
 
 using namespace arma;
@@ -91,6 +92,14 @@ Rcpp::List kernmat_TP_SE_cpp(Rcpp::NumericMatrix X1,Rcpp::NumericMatrix X2,Rcpp:
   return(out);
 }
 
+//double log_multivariate_t_density(arma::colvec y,double mu, double nu, arma::mat Omega){
+//  unsigned int n = y.size();
+//
+//  logp = lgamma((nu+n)/2 ) - lgamma( nu/2 ) - 0.5 * (n * log(nu*arma::datum::pi) + );
+//
+//  return(logp);
+//}
+
 // [[Rcpp::export]]
 Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colvec w, arma::mat Smat, arma::mat Sm, arma::mat Sa, arma::mat invSmatn, Rcpp::List parameters) {
   Rcpp::List gradients = clone(parameters); //for the same list structure
@@ -118,10 +127,10 @@ Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
   tmpS = (invSmatn - TP_adjust * alpha * alpha.t());
 
   //mu - gradient approach
-  gradients["mu"] = 0 * TP_adjust * arma::sum( invSmatn * ybar ) ;
+  gradients["mu"] =  TP_adjust * arma::sum( invSmatn * ybar ) ;
 
   //nu
-  gradients["nu"] = 0 * (boost::math::digamma( 0.5*(nu+n) ) - boost::math::digamma( 0.5*nu ) - 0.5*( ((n - M_norm)/(nu + M_norm))  + log(1 + M_norm/nu) ));
+  gradients["nu"] =  0;//0.5 * nu * (2*boost::math::digamma( 0.5*(nu+n) ) - 2*boost::math::digamma( 0.5*nu ) - ( ((n - M_norm)/(nu + M_norm))  + log(1 + M_norm/nu) ));
 
   //lambda0 - similar as lambdaa for GP, when considering that hatlambdam cancels out
   gradients["lambda0"] = evid_grad(tmpS, Sa);
@@ -150,8 +159,8 @@ Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
   double val;
   double sign;
   arma::log_det(val,sign,invSmatn);  //logdet of INVERSE -> -val
-  //stats(1) = lgamma( 0.5*(nu+n) ) - lgamma( 0.5 * nu) - 0.5 * (n * log(nu  * arma::datum::pi ) - val + n * log(lambda0) + (n + nu) * ( 1 + M_norm/nu ) );
-  stats(1) = - 0.5 * (n * log( 2.0 * arma::datum::pi ) - val + arma::dot( ybar, alpha ) ) ;
+  stats(1) = lgamma( 0.5 * (nu+n) ) - lgamma( 0.5 * nu ) - 0.5*(n*log(nu * arma::datum::pi) - val + (nu+n) * log( 1 + M_norm/nu ) );
+
   //output
   return Rcpp::List::create(Named("gradients") = gradients,Named("stats") = stats );
 }
@@ -169,9 +178,9 @@ arma::rowvec stats_TP_SE(arma::colvec y, arma::mat Kmat, arma::mat invKmatn, Rcp
   ybar = y - as<double>(parameters["mu"]); // - parameters["mu_z"]
   alpha = invKmatn * ybar;
 
-  double lambda0 = exp( as<double>(parameters["lambda0"]));
+  //double lambda0 = exp( as<double>(parameters["lambda0"]));
   double nu = exp( as<double>(parameters["nu"]));
-  double M_norm = pow(arma::norm(ybar-alpha,2),2) / lambda0;
+  double M_norm = arma::dot(ybar,alpha);
 
   //RMSE
   stats(0) = pow(arma::norm(y - (Kmat * alpha + as<double>(parameters["mu"]))),2);
@@ -180,8 +189,7 @@ arma::rowvec stats_TP_SE(arma::colvec y, arma::mat Kmat, arma::mat invKmatn, Rcp
   double val;
   double sign;
   arma::log_det(val,sign,invKmatn);  //logdet of INVERSE -> -val
-  stats(1) = - 0.5 * (n * log( 2.0 * arma::datum::pi ) - val + arma::dot( ybar, alpha ) ) ;
-  //stats(1) = lgamma( 0.5*(nu+n) ) - lgamma( 0.5 * nu) - 0.5 * (n * log(nu  * arma::datum::pi ) - val + n * log(lambda0) + (n + nu) * ( 1 + M_norm/nu ) );
+  stats(1) = lgamma( 0.5 * (nu+n) ) - lgamma( 0.5 * nu ) - 0.5*(n*log(nu * arma::datum::pi) - val + (nu+n) * log( 1 + M_norm/nu ) );
 
   return stats;
 }
