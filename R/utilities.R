@@ -11,7 +11,7 @@ norm_variables <- function(y,X,moments){
     #only normalize non-binary variables
     nonbinary_varbs = unique(1:p * (apply(X,2,function(x) { all(na.omit(x) %in% 0:1) })==0))
     nonbinary_varbs = nonbinary_varbs[nonbinary_varbs!=0]
-    within_unit_circle = unique(1:p * apply(Xp,2,function(x) { all(na.omit(x)<=1 & na.omit(x)>=0 ) }) )
+    within_unit_circle = unique(1:p * apply(X,2,function(x) { all(na.omit(x)<=1 & na.omit(x)>=0 ) }) )
     within_unit_circle = within_unit_circle[within_unit_circle!=0]
 
     normalize_varbs = setdiff(nonbinary_varbs,within_unit_circle)
