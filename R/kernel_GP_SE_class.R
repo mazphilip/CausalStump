@@ -98,7 +98,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      ate = mean(map);
 
                                      #ci
-                                     cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + exp(parameters$sigma_z) * diag(n2)
+                                     cov = K_xx - K_xX %*% invKmatn %*% t(K_xX)
                                      uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
                                      ate_cov = sum(sum(cov))/(n^2);
                                      ate_uncentered_ci = cbind( -1.96 * sqrt(ate_cov), 1.96 * sqrt(ate_cov) )

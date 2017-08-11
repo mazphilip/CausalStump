@@ -121,9 +121,12 @@ predict_treatment <- function(X,CSobject,pscore){
   #remaining kernel calculations using the kernel class method
   pred_list = CSobject$Kernel$predict_treat(CSobject$train_data$y,CSobject$train_data$X,CSobject$train_data$z,X)
 
+
   #add the moments
-  map = CSobject$moments$meanY + sqrt(CSobject$moments$varY) * pred_list$map
+  map = sqrt(CSobject$moments$varY) * pred_list$map
   ci = CSobject$moments$varY * pred_list$ci+ cbind(map,map) #change to broadcasting
 
-  list(map = map,ci = ci)
+  cate = sqrt(CSobject$moments$varY) *pred_list$ate_map;
+  cate_ci = CSobject$moments$varY *pred_list$ate_ci + cbind(cate,cate)
+  list(map = map,ci = ci, ate = cate , ate_ci = cate_ci )
 }

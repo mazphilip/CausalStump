@@ -84,7 +84,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
 
                                      #map
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu) + parameters$mu
-                                     cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z) )
+                                     cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z2) )
                                      #in current specification, includes already lamnbda0
                                      #want:
                                      #ybar = y - parameters$mu;
@@ -106,34 +106,38 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                    predict_treat = function(y,X,z,X2){ #NEED CHANGE
                                      n = length(y);
                                      n2 = nrow(X2);
-                                     z2 = rep(1,n)
+                                     z2_one = rep(1,n2)
+                                     z2_zero = rep(0,n2)
 
-                                     S_xX = kernel_mat(X2,X,z2,z)$Sa
-                                     S_xx = kernel_mat(X2,X2,z2,z2)$Sa
+                                     Sa_xX = kernel_mat(X2,X,z2_one,z)$Sa
+                                     Sa_xx = kernel_mat(X2,X2,z2_one,z2_one)$Sa
+
+                                     ybar = y - parameters$mu
 
                                      #map
-                                     map = S_xX %*% invSmatn %*% (y - parameters$mu)
+                                     map = Sa_xX %*% invSmatn %*% (y - parameters$mu)
                                      ate = mean(map);
 
-                                     #ci
-                                     #median_lambdaa = qinvgamma(0.5, shape = c(exp(parameters$nu))/2, rate = c(exp(parameters$nu))/2 )
-                                     #using the mode of the sampled credible interval
+                                     M_norm = t(ybar) %*% invSmatn %*% ybar;
+                                     TP_term = c((exp(parameters$nu) + M_norm)/(exp(parameters$nu) + n -2))
 
-                                     #mode = c( exp(parameters$nu)) / (c(exp(parameters$nu)) + 2)
-                                     cov = ( S_xx - S_xX %*% invSmatn %*% t(S_xX) + exp(parameters$sigma_z) * diag(n2);
-                                     #ate_cov = sum(sum(cov))/(n^2);
+                                     #ci, simulate from Multivariate t distribution for good credible intervals
+                                     cov = as.matrix( Sa_xx - Sa_xX %*% invSmatn %*% t(Sa_xX)  + 1e-10 * diag(n2) ) ;
+
+                                     #e = eigen(cov, only.values = TRUE)$values
+                                     #hist(as.numeric(e))
+
+                                     U = rep(0,n2)
+                                     ate_U = 0
+                                     N_rep = 100
                                      N_sample = 10000
+                                     for(j in 1:N_rep){
+                                       TP_samples_treat = mvnfast::rmvt(N_sample, mu = rep(0,n2),  sigma = cov, df = c(exp(parameters$nu)) )
+                                       U = U + (1/N_rep) * apply(TP_samples_treat,2,sort)[floor(N_sample*0.95),]
+                                       ate_U = ate_U + (1/N_rep)*sort(apply(TP_samples_treat,1,mean))[floor(N_sample*0.95)]
+                                     }
 
-                                     TP_samples = mvnfast::rmvt(N_sample, mu = map,  sigma = cov, df = c(exp(parameters$n)) )
-                                     #symmetric,
-                                     TP_samples = t(apply(TP_samples, 1, function(x) abs(x-map) ))
-                                     U = apply(TP_samples,2,sort)[floor(N_sample*0.95),] #floor has a faster convergence as samples denser
 
-                                     ate_U = sort(apply(TP_samples,1,mean))[floor(1000*0.95)]
-
-                                     #sqrt_var = sqrt( diag(cov) );
-                                     #uncentered_ci = cbind(-1.96 * sqrt_var, 1.96 * sqrt_var)
-                                     #ate_uncentered_ci = cbind(-1.96 * sqrt(ate_cov), 1.96 * sqrt(ate_cov) )
                                      list(map = map,ci = c(-U,U),ate_map = ate , ate_ci = c(-ate_U,ate_U))
                                    }
                                  )
