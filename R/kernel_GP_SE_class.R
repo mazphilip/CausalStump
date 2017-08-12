@@ -58,7 +58,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      parameters <<- Optim$update(iter,parameters,gradients)
                                      mean_solution(y,z)
 
-                                     if(iter%%100 == 0){ cat(sprintf("%5d | log Evidence %9.4f | RMSE %9..4f \n", iter, stats[2], stats[1])) }
+                                     if(iter%%100 == 0){ cat(sprintf("%5d | log Evidence %9.4f | RMSE %9.4f \n", iter, stats[2], stats[1])) }
                                      get_train_stats(y,X,z)
                                      stats
                                    },
@@ -87,6 +87,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      list(map=map,ci=uncentered_ci)
                                    },
                                    predict_treat = function(y,X,z,X2){
+                                     n = length(y);
                                      n2 = nrow(X2)
                                      z2 = rep(1,n2)
 
