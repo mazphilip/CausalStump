@@ -7,7 +7,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
   #check dimensionality and class of X
   check_inputs(y,X,z);
   if(!missing(pscore)){ X = cbind(X, pscore); }
-
+  n = length(y);
   p = ncol(X);
   #normalize variables
   norm_ret = norm_variables(y,X)
