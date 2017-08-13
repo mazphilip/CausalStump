@@ -18,15 +18,17 @@ Z = rbinom(n, 1, 0.3)
 X1 = rnorm(sum(Z), mean = 40, sd = 10)
 X0 = rnorm(n-sum(Z), mean = 20, sd = 10)
 X0[X0<0] = 0.01
-X = matrix(NaN,n,1)
+X = data.frame(matrix(NaN,n,1))
 X[Z==1,] = X1; X[Z==0,] = X0
+mysort = sort(X,index.return=TRUE)
 
-y0_true = 72 + 3 * sqrt(X)
-y1_true = 90 + exp(0.06 * X)
+y0_true = as.matrix(72 + 3 * sqrt(X))
+y1_true = as.matrix(90 + exp(0.06 * X))
 y0_true[is.nan(y0_true)] = 60
 y0_true[y0_true<60] = 60; y1_true[y1_true<60] = 60
 y0_true[y0_true>120] = 120; y1_true[y1_true>120] = 120
 
+#add observation noise
 Y0 = rnorm(n, mean = y0_true, sd = 1)
 Y1 = rnorm(n, mean = y1_true, sd = 1)
 Y = Y0*(1-Z) + Y1*Z 
@@ -34,7 +36,19 @@ Y = Y0*(1-Z) + Y1*Z
 #parameter learning of Gaussian Process (FALSE), student-t process (TRUE)
 mycs = CausalStump(Y,X,Z,prior=FALSE)
 
-#estimate treatment effect of training sample (GP: exact, TP: sampling)
+#predict response surfaces
+mypred0 = predict_surface(X,0,CS_fit)
+mypred1 = predict_surface(X,1,CS_fit)
+
+#plot surface fit
+par(mfrow=c(1,1))
+plot(X,mypred1$map,ylim = c(70,120),ylab="Y",xlab="X")
+points(X,mypred0$map)
+points(X[,1],Y,col=2,pch=20)
+lines(mysort$x,y1_true[mysort$ix]); lines(mysort$x,y0_true[mysort$ix])
+legend("topleft",c("true","estimates","osbervations"),pch=c(NA,1,20),lty=c(1,NA,NA),col=c(1,1,2) )
+
+#predict treatment effect of training sample (GP: exact, TP: sampling)
 mytreat = predict_treatment(X,myfit)
 
 # the PEHE metric is used as in Hill (2011) (albeit with root):
