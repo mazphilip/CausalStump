@@ -77,13 +77,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu) + parameters$mu
                                      cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z2) )
                                      #in current specification, includes already lamnbda0
-                                     #want:
-                                     #ybar = y - parameters$mu;
-                                     #using the mode of the sampled credible interval
-                                     #mode = c( exp(parameters$nu + parameters$lambda0)) / (c(exp(parameters$nu)) + 2)
-                                     #sqrt_var = sqrt( diag(cov) / mode );
 
-                                     #uncentered_ci = cbind(-1.96 * sqrt_var,1.96 * sqrt_var )
                                      N_sample = 10000
 
                                      TP_samples = mvnfast::rmvt(N_sample, mu = map,  sigma = cov, df = c(exp(parameters$n)),ncores=1)
@@ -109,25 +103,17 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      map = Sa_xX %*% invSmatn %*% (y - parameters$mu)
                                      ate = mean(map);
 
-                                     #M_norm = t(ybar) %*% invSmatn %*% ybar;
-                                     #TP_term = c((exp(parameters$nu) + M_norm)/(exp(parameters$nu) + n - 2))
-
-                                     #ci, simulate from Multivariate t distribution for good credible intervals
                                      cov = as.matrix( Sa_xx - Sa_xX %*% invSmatn %*% t(Sa_xX)  + 1e-10 * diag(n2) ) ;
-
-                                     #e = eigen(cov, only.values = TRUE)$values
-                                     #hist(as.numeric(e))
 
                                      U = rep(0,n2)
                                      ate_U = 0
-                                     N_rep = 100
+                                     N_rep = 50
                                      N_sample = 5000
                                      for(j in 1:N_rep){
                                        TP_samples_treat = mvnfast::rmvt(N_sample, mu = rep(0,n2),  sigma = cov, df = c(exp(parameters$nu)),ncores=1 )
                                        U = U + (1/N_rep) * apply(TP_samples_treat,2,sort)[floor(N_sample*0.95),]
                                        ate_U = ate_U + (1/N_rep)*sort(apply(TP_samples_treat,1,mean))[floor(N_sample*0.95)]
                                      }
-
 
                                      list(map = map,ci = c(-U,U),ate_map = ate , ate_ci = c(-ate_U,ate_U))
                                    }
