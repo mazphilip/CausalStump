@@ -8,14 +8,14 @@ using namespace arma;
 using namespace Rcpp;
 
 //same as for GP_SE
-double evid_grad(arma::mat mymat, arma::mat dK) {
+double evid_grad_TP(arma::mat mymat, arma::mat dK) {
   //grad = - 0.5 * ( sum(diag( tmpK %*% dK ) ) )
   double grad = - 0.5 * trace( mymat * dK);
   return(grad);
 }
 
 //same as for GP_SE
-Rcpp::List evid_scale_gradients(arma::mat X, arma::mat tmpK,arma::mat Km,arma::mat Ka, Rcpp::List parameters){
+Rcpp::List evid_scale_gradients_TP(arma::mat X, arma::mat tmpK,arma::mat Km,arma::mat Ka, Rcpp::List parameters){
   // produce a (p x 2) matrix "grad" with the gradients of Lm and La in the first and second column, respectively
   unsigned int n = X.n_rows;
   unsigned int p = X.n_cols;
@@ -38,8 +38,8 @@ Rcpp::List evid_scale_gradients(arma::mat X, arma::mat tmpK,arma::mat Km,arma::m
     tmpM = Km % tmpX * exp(- as<arma::vec>(parameters["Lm"])[i]);
     tmpA = Ka % tmpX * exp(- as<arma::vec>(parameters["La"])[i]);
 
-    grad_m(i) = evid_grad(tmpK,tmpM);
-    grad_a(i) = evid_grad(tmpK,tmpA);
+    grad_m(i) = evid_grad_TP(tmpK,tmpM);
+    grad_a(i) = evid_grad_TP(tmpK,tmpA);
   }
 
   return Rcpp::List::create(Named("m") = grad_m,Named("a") = grad_a );
@@ -133,22 +133,22 @@ Rcpp::List grad_TP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
   gradients["nu"] =  0.0; // 0.5 * nu * (2*boost::math::digamma( 0.5*(nu+n) ) - 2*boost::math::digamma( 0.5*nu ) - ( ((n - M_norm)/(nu + M_norm))  + log(1 + M_norm/nu) ));
 
   //lambda0 - similar as lambdaa for GP, when considering that hatlambdam cancels out
-  gradients["lambda0"] = evid_grad(tmpS, Sa);
+  gradients["lambda0"] = evid_grad_TP(tmpS, Sa);
 
   //Same as for GP
   //sigma
   dS = arma::diagmat( exp(as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) );
-  gradients["sigma"] = evid_grad(tmpS, dS);
+  gradients["sigma"] = evid_grad_TP(tmpS, dS);
 
   //sigma_z
   dS.diag() = dS.diag() % z;
-  gradients["sigma_z"] = evid_grad(tmpS, dS);
+  gradients["sigma_z"] = evid_grad_TP(tmpS, dS);
 
   //lambdam
-  gradients["lambdam"] = evid_grad(tmpS, Sm);
+  gradients["lambdam"] = evid_grad_TP(tmpS, Sm);
 
   //Lm and La
-  Rcpp::List tmp = evid_scale_gradients(X, tmpS, Sm, Sa, parameters);
+  Rcpp::List tmp = evid_scale_gradients_TP(X, tmpS, Sm, Sa, parameters);
   gradients["Lm"] = as<std::vector<double> >(tmp["m"]);
   gradients["La"] = as<std::vector<double> >(tmp["a"]);
 
