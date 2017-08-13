@@ -20,7 +20,7 @@ X0 = rnorm(n-sum(Z), mean = 20, sd = 10)
 X0[X0<0] = 0.01
 X = data.frame(matrix(NaN,n,1))
 X[Z==1,] = X1; X[Z==0,] = X0
-mysort = sort(X,index.return=TRUE)
+mysort = sort(X[,1],index.return=TRUE)
 
 y0_true = as.matrix(72 + 3 * sqrt(X))
 y1_true = as.matrix(90 + exp(0.06 * X))
@@ -49,7 +49,7 @@ lines(mysort$x,y1_true[mysort$ix]); lines(mysort$x,y0_true[mysort$ix])
 legend("topleft",c("true","estimates","osbervations"),pch=c(NA,1,20),lty=c(1,NA,NA),col=c(1,1,2) )
 
 #predict treatment effect of training sample (GP: exact, TP: sampling)
-mytreat = predict_treatment(X,myfit)
+mytreat = predict_treatment(X,mycs)
 
 # the PEHE metric is used as in Hill (2011) (albeit with root):
 PEHE = sqrt(mean( (y1_true-y0_true - mytreat$map)^2)); PEHE
