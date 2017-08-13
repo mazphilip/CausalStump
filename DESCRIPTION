@@ -1,6 +1,6 @@
 Package: CausalStump
 Type: Package
-Title: Fits a Gaussian process model for causal inference
+Title: Fits a Gaussian process model for treatment effect estimation
 Version: 0.1.1
 Author: Philip Pilgerstorfer
 Maintainer: Philip Pilgerstorfer <philip@pilgerstorfer.org>
