@@ -52,7 +52,6 @@ arma::mat invkernel_cpp(arma::colvec z,arma::colvec w, arma::mat mymat, Rcpp::Li
   }*/
   //neater:
 
-  //Rcpp::Rcout << mymat << std::endl;
   mymat.diag() += exp(as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) % w;
   mymat = inv_sympd(mymat);
 
