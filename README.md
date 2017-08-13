@@ -28,7 +28,7 @@ y0_true[is.nan(y0_true)] = 60
 y0_true[y0_true<60] = 60; y1_true[y1_true<60] = 60
 y0_true[y0_true>120] = 120; y1_true[y1_true>120] = 120
 
-#add observation noise
+#add observation noise (this is different to Hill's example but preserves the additive normal noise assumption)
 Y0 = rnorm(n, mean = y0_true, sd = 1)
 Y1 = rnorm(n, mean = y1_true, sd = 1)
 Y = Y0*(1-Z) + Y1*Z 
