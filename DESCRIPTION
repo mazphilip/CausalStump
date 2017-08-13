@@ -1,7 +1,7 @@
 Package: CausalStump
 Type: Package
 Title: Fits a Gaussian process model for causal inference
-Version: 0.1.0
+Version: 0.1.1
 Author: Philip Pilgerstorfer
 Maintainer: Philip Pilgerstorfer <philip@pilgerstorfer.org>
 Description: More about what it does (maybe more than one line)
