@@ -6,33 +6,6 @@
 
 using namespace Rcpp;
 
-// evid_grad
-double evid_grad(arma::mat mymat, arma::mat dK);
-RcppExport SEXP _CausalStump_evid_grad(SEXP mymatSEXP, SEXP dKSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type mymat(mymatSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type dK(dKSEXP);
-    rcpp_result_gen = Rcpp::wrap(evid_grad(mymat, dK));
-    return rcpp_result_gen;
-END_RCPP
-}
-// evid_scale_gradients
-Rcpp::List evid_scale_gradients(arma::mat X, arma::mat tmpK, arma::mat Km, arma::mat Ka, Rcpp::List parameters);
-RcppExport SEXP _CausalStump_evid_scale_gradients(SEXP XSEXP, SEXP tmpKSEXP, SEXP KmSEXP, SEXP KaSEXP, SEXP parametersSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type tmpK(tmpKSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Km(KmSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Ka(KaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type parameters(parametersSEXP);
-    rcpp_result_gen = Rcpp::wrap(evid_scale_gradients(X, tmpK, Km, Ka, parameters));
-    return rcpp_result_gen;
-END_RCPP
-}
 // invkernel_cpp
 arma::mat invkernel_cpp(arma::colvec z, arma::colvec w, arma::mat mymat, Rcpp::List parameters);
 RcppExport SEXP _CausalStump_invkernel_cpp(SEXP zSEXP, SEXP wSEXP, SEXP mymatSEXP, SEXP parametersSEXP) {
@@ -212,8 +185,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_CausalStump_evid_grad", (DL_FUNC) &_CausalStump_evid_grad, 2},
-    {"_CausalStump_evid_scale_gradients", (DL_FUNC) &_CausalStump_evid_scale_gradients, 5},
     {"_CausalStump_invkernel_cpp", (DL_FUNC) &_CausalStump_invkernel_cpp, 4},
     {"_CausalStump_mu_solution_cpp", (DL_FUNC) &_CausalStump_mu_solution_cpp, 4},
     {"_CausalStump_kernmat_GP_SE_cpp", (DL_FUNC) &_CausalStump_kernmat_GP_SE_cpp, 5},

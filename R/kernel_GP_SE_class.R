@@ -1,7 +1,6 @@
-require(Rcpp)
-require(RcppArmadillo)
-
-sourceCpp("src/kernel_GP_SE_cpp.cpp")
+#require(Rcpp)
+#require(RcppArmadillo)
+#sourceCpp("src/kernel_GP_SE_cpp.cpp")
 
 KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                  fields = list(parameters = "list",
