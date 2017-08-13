@@ -1,11 +1,10 @@
 Package: CausalStump
 Type: Package
-Title: Fits a Gaussian process model for treatment effect estimation
+Title: CausalStump: A structural Gaussian process implementation for Causal Inference
 Version: 0.1.1
 Author: Philip Pilgerstorfer
 Maintainer: Philip Pilgerstorfer <philip@pilgerstorfer.org>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Fits a Gaussian process model for treatment effect estimation. 
 License: MIT
 Encoding: UTF-8
 LazyData: true
