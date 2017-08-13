@@ -1,6 +1,7 @@
 #simulation as in Hill (2011)
-
-source("R/GPSmain.R")
+library(methods)
+#source("R/GPSmain.R")
+library(CausalStump)
 
 set.seed(1231)
 
@@ -39,7 +40,7 @@ pscore = pnorm(apply(myPSbart$yhat.test,2,mean))
 
 source("R/GPSmain.R")
 
-CS_fit = CausalStump(Y,X,Z,pscore=pscore,maxiter=5000,tol=1e-4,learning_rate = 0.001,prior=TRUE,nu=2,myoptim = "GD")
+CS_fit = CausalStump(Y,X,Z,pscore=pscore,maxiter=5000,tol=1e-4,learning_rate = 0.01,prior=TRUE,nu=2,myoptim = "Nadam")
 CS_fit = CausalStump(Y,X,Z,pscore=pscore,maxiter=5000,tol=1e-4,learning_rate = 0.01,prior=FALSE,myoptim = "GD")
 
 CS_pred0 = predict_surface(X2,0,CS_fit,pscore=pscore)
@@ -49,13 +50,26 @@ plot(X[,1],CS_pred1$map,ylim = c(70,120))
 points(X[,1],CS_pred0$map)
 lines(X.sort,y1_true[mysort$ix])
 lines(X.sort,y0_true[mysort$ix])
+lines(X.sort,CS_pred0$ci[mysort$ix,1])
+lines(X.sort,CS_pred0$ci[mysort$ix,2])
+lines(X.sort,CS_pred1$ci[mysort$ix,1])
+lines(X.sort,CS_pred1$ci[mysort$ix,2])
+
+mean(y1_true-y0_true)
 
 CS_treat = predict_treatment(X2,CS_fit,pscore=pscore)
+CS_treat$ate
+CS_treat$ate_ci
+
 par(mfrow=c(1,1))
-plot(X[,1],CS_treat$map)
+plot(X[,1],CS_treat$map,ylim=c(0,30))
 lines(X.sort,CS_treat$ci[mysort$ix,1])
 lines(X.sort,CS_treat$ci[mysort$ix,2])
 lines(X.sort,(y1_true-y0_true)[mysort$ix],lty=2,lwd=2,col=2)
 
 PEHE = sqrt(mean( (y1_true-y0_true - CS_treat$map)^2 )); PEHE
+
+
+
+
 
