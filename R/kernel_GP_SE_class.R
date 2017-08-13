@@ -1,8 +1,7 @@
 require(Rcpp)
 require(RcppArmadillo)
+
 sourceCpp("src/kernel_GP_SE_cpp.cpp")
-
-
 
 KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                  fields = list(parameters = "list",
@@ -37,6 +36,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                    getinv_kernel = function(X,z) {
                                      #get matrices and return inverse for prediction, maybe return Ka in a later stage
 
+
                                      #get new kernel and invert with noise
                                      Klist = kernel_mat(X,X,z,z);
 
@@ -49,6 +49,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                    },
                                    para_update = function(iter,y,X,z,Optim) {
                                      #update Kmat and invKmat in the class environment
+
                                      getinv_kernel(X,z);
 
                                      gradlist = grad_GP_SE_cpp(y,as.matrix(X),z,w,Kmat,Km,Ka,invKmatn,parameters)

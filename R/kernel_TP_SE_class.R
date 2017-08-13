@@ -62,7 +62,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      mean_solution(y,z)
 
                                      if(iter%%100 == 0){ cat(sprintf("%5d | log Evidence %9.4f | RMSE %9.4f \n", iter, stats[2], stats[1])) }
-                                     get_train_stats(y,X,z)
+                                     #get_train_stats(y,X,z)
                                      stats
                                    },
                                    get_train_stats = function(y,X,z){
