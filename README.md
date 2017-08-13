@@ -33,7 +33,7 @@ Y0 = rnorm(n, mean = y0_true, sd = 1)
 Y1 = rnorm(n, mean = y1_true, sd = 1)
 Y = Y0*(1-Z) + Y1*Z 
 
-#parameter learning of Gaussian Process (FALSE), student-t process (TRUE)
+#parameter learning of Gaussian process (FALSE), student-t process (TRUE)
 mycs = CausalStump(Y,X,Z,prior=FALSE)
 
 #predict response surfaces
