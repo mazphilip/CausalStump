@@ -42,8 +42,8 @@ mypred1 = predict_surface(X,1,mycs)
 
 #plot surface fit
 par(mfrow=c(1,1))
-plot(X,mypred1$map,ylim = c(70,120),ylab="Y",xlab="X")
-points(X,mypred0$map)
+plot(X[,1],mypred1$map,ylim = c(70,120),ylab="Y",xlab="X")
+points(X[,1],mypred0$map)
 points(X[,1],Y,col=2,pch=20)
 lines(mysort$x,y1_true[mysort$ix]); lines(mysort$x,y0_true[mysort$ix])
 legend("topleft",c("true","estimates","osbervations"),pch=c(NA,1,20),lty=c(1,NA,NA),col=c(1,1,2) )
