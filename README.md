@@ -3,7 +3,7 @@ This package fits a Gaussian process to causal inference observational data.  It
 
 This package can be installed using following command in R:
 ```R
-install.packages("https://raw.github.com/mazphilip/grf/tar/CausalStump_0.1.0.tar.gz", repos = NULL, type = "source")
+install.packages("https://github.com/mazphilip/CausalStump/raw/master/tar/CausalStump_0.1.0.tar.gz", repos = NULL, type = "source")
 ```
 
 
