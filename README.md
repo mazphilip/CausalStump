@@ -37,8 +37,8 @@ Y = Y0*(1-Z) + Y1*Z
 mycs = CausalStump(Y,X,Z,prior=FALSE)
 
 #predict response surfaces
-mypred0 = predict_surface(X,0,CS_fit)
-mypred1 = predict_surface(X,1,CS_fit)
+mypred0 = predict_surface(X,0,mycs)
+mypred1 = predict_surface(X,1,mycs)
 
 #plot surface fit
 par(mfrow=c(1,1))
