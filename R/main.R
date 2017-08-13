@@ -1,4 +1,4 @@
-
+require(RcppArmadillo)
 source("R/utilities.R")
 source("R/kernel_classes.R")
 source("R/optimizer_classes.R")
@@ -10,12 +10,12 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
   n = length(y);
   p = ncol(X);
   #normalize variables
+
   norm_ret = norm_variables(y,X)
   moments = norm_ret$moments; y = norm_ret$y; X = norm_ret$X;
 
   #if not alternative weighting, use equal weights
   if(missing(w)){ w = rep(1,n) }
-
   if(prior==TRUE){
     #if(kernelfun == "SE") {
     print("Fitting the Student-t Process")
@@ -34,11 +34,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
       myKernel$parainit(y);
   }
 
-
-  #initialize parameters
-
-
-  #select parameter
+  #initialize optimizer
   if((myoptim=="Adam") || (myoptim=="Nadam")){
     if(myoptim=="Adam") {
       myOptimizer = optAdam$new(lr = learning_rate, beta1 = beta1, beta2 = beta2)
@@ -57,7 +53,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
 
   for(iter in 1:maxiter){
     #print(myKernel$parameters)
-
+    #ubuntu initializes two instances for update!
     stats[,iter+1] = myKernel$para_update(iter,y,X,z,myOptimizer)
 
     #tolerance missing
@@ -77,7 +73,9 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
   plot(stats[2,3:(iter+2)],type="l",ylab="log Evidence",xlab="Iterations")
   plot(stats[1,3:(iter+2)],type="l",ylab="RMSE",xlab="Iterations",ylim=c(0,5))
 
-  list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z)) #generate S3 output class? and use overloaded predict etc. ?
+  Stump = list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z)) #generate S3 output class? and use overloaded predict etc. ?
+  class(Stump) = "CausalStump"
+  Stump
 }
 
 predict_surface <- function(X,z,CSobject,pscore){
