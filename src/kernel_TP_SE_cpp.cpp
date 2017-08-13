@@ -1,8 +1,5 @@
 // [[Rcpp::depends("RcppArmadillo")]]
 #include <RcppArmadillo.h>
-//#include <boost/math/special_functions/digamma.hpp>
-//#include <boost/math/distributions/inverse_gamma.hpp>
-//#include <cmath>
 
 using namespace arma;
 using namespace Rcpp;

@@ -1,12 +1,3 @@
-#require(Rcpp)
-#require(RcppArmadillo)
-#require(invgamma)
-#sourceCpp("src/kernel_TP_SE_cpp.cpp")
-#Using some prior-invariant functions from the GP cpp file:
-#sourceCpp("src/kernel_GP_SE_cpp.cpp")
-#require(mvnfast)
-
-
 KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                  fields = list(parameters = "list",
                                                invSmatn = "matrix", #prior-scaled kernel matrices "lambda_0 * Sigma"
