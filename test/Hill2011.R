@@ -1,4 +1,4 @@
-
+#Hill (2011)'s IHDP simulation, surface B
 
 niters=1
 
@@ -9,8 +9,6 @@ library(gbm)
 set.seed(2659232)
 
 ## Preprocessing Simulation data ####
-#From Hill 2011
-
 load(file="test/sim.data")
 obs <- imp1[!(imp1$treat==1 & imp1$momwhite==0),]
 
@@ -138,6 +136,8 @@ run <- function(i){
   pscore.bart = pnorm(apply(myPSbart$yhat.test,2,mean))
 
   pscore = pscore.bart
+  X.bart.train.ps = cbind(X.bart.train,pscore);
+  #X.bart.test.ps = cbind(X.bart.test,rbind(pscore,pscore));
 
   ## BART ####
   BART_fit = BayesTree::bart(x.train = X.bart.train, y.train = Y, x.test=X.bart.test,ntree=100,ndpost=3000,nskip=500,keepevery=1)
@@ -167,18 +167,49 @@ run <- function(i){
                                tau.ci = tau.ci.bart,
                                ate.ci = ate.ci.bart,
                                y = Y, z = Z, y1 = mysample$y1, y0 = mysample$y0 ,pscore = pscore)
+  ## BCF #####################################################################
+  #no prior on variance of prior of the treatment effect (as in Hahn et al 2017)
+  BCF_fit0 = BayesTree::bart(x.train = X.bart.train.ps[Z==0,],y.train = Y[Z==0],x.test=X.bart.train.ps,ntree=100,ndpost=3000,nskip=500,keepevery=1,power=3.0)
+  BCF_fit1 = BayesTree::bart(x.train = X.bart.train.ps[Z==1,],y.train = Y[Z==1],x.test=X.bart.train.ps,ntree=100,ndpost=3000,nskip=500,keepevery=1,power=3.0)
 
-  ## GP PS ####
+  ## obtain estimates
+  #BCF.fit1$yhat.test - BCF.fit0$yhat.test
 
+  y.hat.bcf   = apply( sweep(BCF_fit1$yhat.test,MARGIN=2,Z,`*`) + sweep(BCF_fit0$yhat.test,MARGIN=2,1-Z,`*`) ,2,mean)
+  tau.hat.bcf = apply( BCF_fit1$yhat.test - BCF_fit0$yhat.test ,2,mean)
+  ate.ci.bcf  = {
+    tmpvar = var(apply( BCF_fit1$yhat.test - BCF_fit0$yhat.test ,1,mean))
+    L = mean(tau.hat.bcf) - 1.96 * sqrt(tmpvar)
+    U = mean(tau.hat.bcf) + 1.96 * sqrt(tmpvar)
+    cbind(L,U)
+  }
+  tau.ci.bcf = {
+    tmpsort = apply(BCF_fit1$yhat.test - BCF_fit0$yhat.test,2,sort)
+    idx975 = round(nrow(BCF_fit1$yhat.test)*0.975,0)
+    idx025 = round(nrow(BCF_fit1$yhat.test)*0.025,0)
+    L = tmpsort[idx025,]
+    U = tmpsort[idx975,]
+    cbind(L,U)
+  }
+
+  ## evaluate and store results
+  result.item = update.results(iter,"BCF",result.item,
+                               y.hat = y.hat.bcf,
+                               tau.hat = tau.hat.bcf,
+                               tau.ci = tau.ci.bcf,
+                               ate.ci = ate.ci.bcf,
+                               y = Y, z = Z, y1 = mysample$y1, y0 = mysample$y0 ,pscore = pscore)
+
+  ## GP PS #####################################################################
   GP_PS_fit = CausalStump(Y,Xdf,Z,pscore=pscore,maxiter=1000,tol=1e-4,learning_rate = 0.1,prior=FALSE,myoptim = "Nadam")
 
   ## predict
   #GS_PS_pred = predict_surface(Xdf,Z,GP_PS_fit,pscore=pscore)
   GS_PS_treat = predict_treatment(Xdf,GP_PS_fit,pscore=pscore)
-  plot(GS_PS_treat$map,mysample$tau); abline(0,1,col=3)
-  PEHE = sqrt( mean( (GS_PS_treat$map - mysample$tau)^2 ) ); PEHE
+  #plot(GS_PS_treat$map,mysample$tau); abline(0,1,col=3)
+  #PEHE = sqrt( mean( (GS_PS_treat$map - mysample$tau)^2 ) ); PEHE
 
-  GS_PS_pred = predict_surface(X.CS,Z,GP_PS_fit)
+  GS_PS_pred = predict_surface(Xdf,Z,GP_PS_fit)
 
   y.hat.gp.ps = GS_PS_pred$map
   tau.hat.gp.ps = GS_PS_treat$map
@@ -187,10 +218,63 @@ run <- function(i){
 
   ## evaluate and store results
   result.item = update.results(iter,"GP.PS",result.item,
-                               y.hat = y.hat.gps,
-                               tau.hat = tau.hat.gps,
-                               tau.ci = tau.ci.gps,
-                               ate.ci = ate.ci.gps,
+                               y.hat = y.hat.gp.ps,
+                               tau.hat = tau.hat.gp.ps,
+                               tau.ci = tau.ci.gp.ps,
+                               ate.ci = ate.ci.gp.ps,
+                               y = Y, z = Z, y1 = mysample$y1, y0 = mysample$y0 ,pscore = pscore)
+
+  ## TP2 ####
+  TP2_fit = CausalStump(Y,Xdf,Z,maxiter=1000,tol=1e-4,learning_rate = 0.1,prior=TRUE,nu=2,myoptim = "Nadam")
+
+  ## predict
+  #GS_PS_pred = predict_surface(Xdf,Z,GP_PS_fit,pscore=pscore)
+  TP2_treat = predict_treatment(Xdf,TP2_fit)
+  #plot(GS_PS_treat$map,mysample$tau); abline(0,1,col=3)
+  #PEHE = sqrt( mean( (GS_PS_treat$map - mysample$tau)^2 ) ); PEHE
+
+  TP2_pred = predict_surface(Xdf,Z,TP2_fit)
+
+  y.hat.tp2 = TP2_pred$map
+  tau.hat.tp2 = TP2_treat$map
+  tau.ci.tp2  = TP2_treat$ci
+  ate.ci.tp2  = TP2_treat$ate_ci
+
+  ## evaluate and store results
+  result.item = update.results(iter,"TP2",result.item,
+                               y.hat = y.hat.tp2,
+                               tau.hat = tau.hat.tp2,
+                               tau.ci = tau.ci.tp2,
+                               ate.ci = ate.ci.tp2,
+                               y = Y, z = Z, y1 = mysample$y1, y0 = mysample$y0 ,pscore = pscore)
+
+  ## CF #####################################################################
+  ## fit
+  CF_forest = grf::causal_forest(X = X,Y =  Y, W = Z, num.trees = 10000,precompute.nuisance = TRUE,num.threads=2)
+
+  ## predict
+  CF_pred   = predict(CF_forest, X.test = X, estimate.variance = TRUE,num.threads=2)
+
+  y.hat.cf   = CF_forest$Y.hat
+  tau.hat.cf = CF_pred$predictions
+  tau.ci.cf  = cbind(tau.hat.cf - 1.96 *sqrt(CF_pred$variance.estimates),
+                     tau.hat.cf + 1.96 *sqrt(CF_pred$variance.estimates))
+  #cannot get confidence interval for CF
+
+  ate.ci.cf  =  { tmp.ate = grf::estimate_average_effect(CF_forest, target.sample = "all");
+  c(tmp.ate["estimate"] - 1.96 * tmp.ate["std.err"],
+    tmp.ate["estimate"] + 1.96 * tmp.ate["std.err"])}
+
+  ## evaluate and store results
+  result.item = update.results(iter,"CF",result.item,
+                               y.hat = y.hat.cf,
+                               tau.hat = tau.hat.cf,
+                               tau.ci = tau.ci.cf,
+                               ate.ci = ate.ci.cf,
                                y = Y, z = Z, y1 = mysample$y1, y0 = mysample$y0 ,pscore = pscore)
 
 }
+
+
+#library(xtable)
+#xtable(round(result.item,2))
