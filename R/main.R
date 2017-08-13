@@ -66,7 +66,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
   #plot
   par(mfrow=c(1,2))
   plot(stats[2,3:(iter+2)],type="l",ylab="log Evidence",xlab="Iterations")
-  plot(stats[1,3:(iter+2)],type="l",ylab="RMSE",xlab="Iterations",ylim=c(0,5))
+  plot(stats[1,3:(iter+2)],type="l",ylab="training RMSE",xlab="Iterations",ylim=c(0,5))
 
   Stump = list(Kernel = myKernel,moments=moments,train_data=list(y=y,X=X,z=z)) #generate S3 output class? and use overloaded predict etc. ?
   class(Stump) = "CausalStump"
