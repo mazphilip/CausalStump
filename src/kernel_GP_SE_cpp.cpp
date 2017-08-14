@@ -52,7 +52,7 @@ arma::mat invkernel_cpp(arma::colvec z,arma::colvec w, arma::mat mymat, Rcpp::Li
   }*/
   //neater:
 
-  mymat.diag() += exp(as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) % w;
+  mymat.diag() += exp(as<double>(parameters["sigma"])) * w; // + as<double>(parameters["sigma_z"]) * z
   mymat = inv_sympd(mymat);
 
   return(mymat);
@@ -159,12 +159,12 @@ Rcpp::List grad_GP_SE_cpp(arma::colvec y, arma::mat X, arma::colvec z,arma::colv
   tmpK = invKmatn - alpha * alpha.t();
 
   //sigma
-  dK = arma::diagmat( exp( as<double>(parameters["sigma"]) + as<double>(parameters["sigma_z"]) * z ) % w );
+  dK = arma::diagmat( exp( as<double>(parameters["sigma"]) ) * w ); //+ as<double>(parameters["sigma_z"]) * z
   gradients["sigma"] = evid_grad(tmpK, dK);
 
   //sigma_z
-  dK.diag() = dK.diag() % z;
-  gradients["sigma_z"] = evid_grad(tmpK, dK);
+  //dK.diag() = dK.diag() % z;
+  //gradients["sigma_z"] = evid_grad(tmpK, dK);
 
   //lambdam
   gradients["lambdam"] = evid_grad(tmpK, Km);
