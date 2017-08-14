@@ -103,7 +103,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      map = Sa_xX %*% invSmatn %*% (y - parameters$mu)
                                      ate = mean(map);
 
-                                     cov = as.matrix( Sa_xx - Sa_xX %*% invSmatn %*% t(Sa_xX)  + 1e-10 * diag(n2) ) ;
+                                     cov = as.matrix( Sa_xx - Sa_xX %*% invSmatn %*% t(Sa_xX)  + 1e-6 * diag(n2) ) ;
 
                                      U = rep(0,n2)
                                      ate_U = 0
