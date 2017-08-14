@@ -51,7 +51,7 @@ legend("topleft",c("true","estimates","osbervations"),pch=c(NA,1,20),lty=c(1,NA,
 #predict treatment effect of training sample (GP: exact, TP: sampling)
 mytreat = predict_treatment(X,mycs)
 
-# the PEHE metric is used as in Hill (2011) (albeit with root):
+# the PEHE metric is used as in Hill (2011):
 PEHE = sqrt(mean( (y1_true-y0_true - mytreat$map)^2)); PEHE
 
 ```
