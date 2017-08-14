@@ -84,7 +84,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      #symmetric,
                                      TP_samples = t(apply(TP_samples, 1, function(x) abs(x-map) ))
 
-                                     U = apply(TP_samples,2,sort)[floor(N_sample*0.95),] #floor has a faster convergence as samples denser
+                                     U = apply(TP_samples,2,sort)[floor(N_sample*0.90),] #floor has a faster convergence as samples denser
 
                                      list(map=map,ci=c(-U,U))
                                    },
@@ -107,12 +107,13 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
 
                                      U = rep(0,n2)
                                      ate_U = 0
-                                     N_rep = 50
+
+                                     N_rep = 10
                                      N_sample = 5000
                                      for(j in 1:N_rep){
                                        TP_samples_treat = mvnfast::rmvt(N_sample, mu = rep(0,n2),  sigma = cov, df = c(exp(parameters$nu)),ncores=1 )
-                                       U = U + (1/N_rep) * apply(TP_samples_treat,2,sort)[floor(N_sample*0.95),]
-                                       ate_U = ate_U + (1/N_rep)*sort(apply(TP_samples_treat,1,mean))[floor(N_sample*0.95)]
+                                       U = U + (1/N_rep) * apply(TP_samples_treat,2,sort)[floor(N_sample*0.90),] #90% as now one-sided
+                                       ate_U = ate_U + (1/N_rep)*sort(apply(TP_samples_treat,1,mean))[floor(N_sample*0.90)]
                                      }
 
                                      list(map = map,ci = c(-U,U),ate_map = ate , ate_ci = c(-ate_U,ate_U))
