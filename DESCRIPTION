@@ -5,7 +5,7 @@ Version: 0.1.2
 Author: Philip Pilgerstorfer
 Maintainer: Philip Pilgerstorfer <philip@pilgerstorfer.org>
 Description: Fits a Gaussian process model for treatment effect estimation. 
-License: MIT
+License: GPL 2.0
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.3.1)
