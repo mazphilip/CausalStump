@@ -13,7 +13,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
   if(missing(w)){ w = rep(1,n) }
   if(prior==TRUE){
     #if(kernelfun == "SE") {
-    print("Fitting the Student-t Process")
+    cat("Fitting the Student-t Process:\n")
       myKernel = KernelClass_TP_SE$new(p = p,w = rep(1,n)) #object
     #} else if(kernelfun == "Matern52") {
     #  myKernel = KernelClass_TP_M52$new(p = p,w = rep(1,n)) #object
@@ -21,7 +21,7 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
       myKernel$parainit(y,nu);
   } else {
     #if(kernelfun == "SE") {
-    print("Fitting the Gaussian process")
+    cat("Fitting the Gaussian process:\n")
       myKernel = KernelClass_GP_SE$new(p = p,w = rep(1,n)) #object
     #} else if(kernelfun == "Matern52") {
     #  myKernel = KernelClass_GP_M52$new(p = p,w = rep(1,n)) #object
@@ -53,12 +53,11 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
 
     #tolerance missing
     change = abs(stats[2,iter+1] - stats[2,iter])
-    if((change < tol) && (iter > 3)){ print("Stopped due to tolerance"); break; }
+    if((change < tol) && (iter > 3)){ cat( sprintf("Stopped: change smaller than tolerance after %d iterations",iter)); break; }
   }
-  if(iter == maxiter){ print("Stopped due to maximum iterations reached") }
-  print("Final parameters")
-  print(myKernel$parameters)
-  #output changes
+  if(iter == maxiter){ cat("Stopped: maximum iterations reached") }
+  #print("Final parameters")
+  #print(myKernel$parameters)
 
   #generate kernel once more and final stats
   stats[,iter+2] = myKernel$get_train_stats(y,X,z)
@@ -73,10 +72,12 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",prior=FA
   Stump
 }
 
+#todo: change to S3 method
 predict_surface <- function(X,z,CSobject,pscore){
   #this function returns the prediction for the fitted Gaussian process
   #only includes calculations with the new data
   if(!missing(pscore)){ X = cbind(X, pscore); }
+  if(nrow(X)!=nrow(CSobject$train_data$X)){ stop("Error: propensity score mismatch", call. = FALSE) }
 
   #if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
   n = nrow(X);
@@ -98,10 +99,13 @@ predict_surface <- function(X,z,CSobject,pscore){
   list(map = map,ci = ci)
 }
 
+#todo: change to S3 method
 predict_treatment <- function(X,CSobject,pscore){
   #this function returns the prediction for the fitted Gaussian process
   #only includes calculations with the new data
   if(!missing(pscore)){ X = cbind(X, pscore); }
+
+  if(nrow(X)!=nrow(CSobject$train_data$X)){ stop("Error: propensity score mismatch", call. = FALSE) }
 
   #if(class(CSobject)!=""){ warning("CSobject: incorrect class", call. = FALSE) }
   n = nrow(X);
