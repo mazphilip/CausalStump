@@ -11,7 +11,7 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
 
                                      #for momentum and adam
                                      parameters <<- list(sigma=log(var(y)),
-                                                         sigma_z=log(runif(1,min=1,max=2)),
+                                                         #sigma_z=log(runif(1,min=1,max=2)),
                                                          lambdam=log(runif(1,min=0.2,max=1)),
                                                          nu=log(nu), #exp(nu)
                                                          lambda0=log(runif(1,min=0.1,max=0.7)), #exp( lambda0)
@@ -69,13 +69,13 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      parameters <<- parameters
                                    },
                                    predict = function(y,X,z,X2,z2){ #NEED CHANGE
-
+                                     n2 = nrow(X2)
                                      S_xX = kernel_mat(X2,X,z2,z)$Smat
                                      S_xx = kernel_mat(X2,X2,z2,z2)$Smat
 
                                      #map
                                      map = S_xX %*% invSmatn %*% (y - parameters$mu) + parameters$mu
-                                     cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z2) )
+                                     cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + exp(parameters$sigma) * diag(n2) #diag(exp(parameters$sigma) + parameters$sigma_z * z2) )
                                      #in current specification, includes already lamnbda0
 
                                      N_sample = 10000
@@ -108,8 +108,8 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      U = rep(0,n2)
                                      ate_U = 0
 
-                                     N_rep = 10
-                                     N_sample = 5000
+                                     N_rep = 100
+                                     N_sample = 1000
                                      for(j in 1:N_rep){
                                        TP_samples_treat = mvnfast::rmvt(N_sample, mu = rep(0,n2),  sigma = cov, df = c(exp(parameters$nu)),ncores=1 )
                                        U = U + (1/N_rep) * apply(TP_samples_treat,2,sort)[floor(N_sample*0.90),] #90% as now one-sided

@@ -11,7 +11,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
 
                                      #for momentum and adam
                                      parameters <<- list(sigma=log(var(y)),
-                                                         sigma_z=log(runif(1,min=1,max=2)),
+                                                         #sigma_z=log(runif(1,min=1,max=2)),
                                                          lambdam=log(runif(1,min=0.2,max=1)),
                                                          lambdaa=log(runif(1,min=0.2,max=1)),
                                                          Lm=rep(-0.1,p),La=rep(0.1,p),
@@ -72,13 +72,13 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                      parameters <<- parameters
                                    },
                                    predict = function(y,X,z,X2,z2){
-
+                                     n2 = nrow(X2)
                                      K_xX = kernel_mat(X2,X,z2,z)$Kmat
                                      K_xx = kernel_mat(X2,X2,z2,z2)$Kmat
 
                                      #map
                                      map = K_xX %*% invKmatn %*% (y - parameters$mu) + parameters$mu
-                                     cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + diag(exp(parameters$sigma + parameters$sigma_z * z) )
+                                     cov = K_xx - K_xX %*% invKmatn %*% t(K_xX) + exp(parameters$sigma) * diag(n2) #diag(exp(parameters$sigma + parameters$sigma_z * z) )
                                      uncentered_ci = cbind(-1.96*diag(cov),1.96 * diag(cov))
                                      list(map=map,ci=uncentered_ci)
                                    },
