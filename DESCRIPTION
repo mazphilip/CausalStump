@@ -1,7 +1,7 @@
 Package: CausalStump
 Type: Package
 Title: CausalStump: A structural Gaussian process implementation for Causal Inference
-Version: 0.1.2
+Version: 0.1.3
 Author: Philip Pilgerstorfer
 Maintainer: Philip Pilgerstorfer <philip@pilgerstorfer.org>
 Description: Fits a Gaussian process model for treatment effect estimation. 

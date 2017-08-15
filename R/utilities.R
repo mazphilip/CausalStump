@@ -19,7 +19,7 @@ norm_variables <- function(y,X,moments){
     tmp = data.frame(X[,normalize_varbs])
 
     moments$meanX[normalize_varbs] = apply(tmp,2,mean)
-    moments$varX[normalize_varbs]  = apply(abs(tmp),2,max)
+    moments$varX[normalize_varbs]  = apply(abs(tmp),2,max)^2
   }
   mynorm <- function(i){ (X[,i]-moments$meanX[i]) / sqrt(moments$varX[i]) }
   X = data.frame(sapply(1:p,mynorm))
