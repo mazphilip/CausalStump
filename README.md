@@ -3,7 +3,7 @@ This package fits a Gaussian process for treatment effect estimation. It is part
 
 This package can be installed using following command in R:
 ```R
-install.packages("https://github.com/mazphilip/CausalStump/raw/master/tar/CausalStump_0.1.2.tar.gz", repos = NULL, type = "source")
+install.packages("https://github.com/mazphilip/CausalStump/raw/master/tar/CausalStump_0.1.3.tar.gz", repos = NULL, type = "source")
 ```
 
 As there is no documentation yet, here is an example of how to use the package to estimate treatment effects
