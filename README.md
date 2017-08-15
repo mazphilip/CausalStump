@@ -33,12 +33,12 @@ Y0 = rnorm(n, mean = y0_true, sd = 1)
 Y1 = rnorm(n, mean = y1_true, sd = 1)
 Y = Y0*(1-Z) + Y1*Z 
 
-#parameter learning of Gaussian process (FALSE), student-t process (TRUE)
+#parameter learning of Gaussian process (prior = FALSE), student-t process (prior = TRUE)
 mycs = CausalStump(Y,X,Z,prior=FALSE)
 
 #predict response surfaces
-mypred0 = predict_surface(X,0,mycs)
-mypred1 = predict_surface(X,1,mycs)
+mypred0 = predict(mycs,z=0)
+mypred1 = predict(mycs,z=1)
 
 #plot surface fit
 par(mfrow=c(1,1))
@@ -49,7 +49,7 @@ lines(mysort$x,y1_true[mysort$ix]); lines(mysort$x,y0_true[mysort$ix])
 legend("topleft",c("true","estimates","osbervations"),pch=c(NA,1,20),lty=c(1,NA,NA),col=c(1,1,2) )
 
 #predict treatment effect of training sample (GP: exact, TP: sampling)
-mytreat = predict_treatment(X,mycs)
+mytreat = treatment(mycs)
 
 # the PEHE metric is used as in Hill (2011):
 PEHE = sqrt(mean( (y1_true-y0_true - mytreat$map)^2)); PEHE
