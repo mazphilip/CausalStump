@@ -1,15 +1,11 @@
-require(Rcpp)
-require(RcppArmadillo)
-sourceCpp("src/optimizer_cpp.cpp")
-
 list2zero <- function(mylist){
-  tmplist = within(stack(mylist), values <- 0.0)
+  tmplist = within(utils::stack(mylist), values <- 0.0)
 
   if(nrow(tmplist) == nlevels(tmplist[,2])){
     zerolist <- as.list(rep(0.0,nrow(tmplist)))
-    zerolist = setNames(zerolist,tmplist[,"ind"])
+    zerolist = stats::setNames(zerolist,tmplist[,"ind"])
   } else {
-    zerolist = unstack(tmplist)
+    zerolist = utils::unstack(tmplist)
   }
   zerolist
 }

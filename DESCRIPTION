@@ -5,7 +5,7 @@ Version: 0.1.2
 Author: Philip Pilgerstorfer
 Maintainer: Philip Pilgerstorfer <philip@pilgerstorfer.org>
 Description: Fits a Gaussian process model for treatment effect estimation. 
-License: GPL 2.0
+License: GPL-2
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.3.1)
@@ -13,4 +13,4 @@ Imports: methods,
          Rcpp (>= 0.12.12),
          mvnfast
 LinkingTo: Rcpp, RcppArmadillo
-
+RoxygenNote: 6.0.1
