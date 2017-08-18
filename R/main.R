@@ -45,14 +45,15 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   #if not alternative weighting, use equal weights
   if(missing(w)){ w = rep(1,n) }
 
+
   #set GP or TP
   if(prior==TRUE){
     cat(sprintf("\nFitting the Student-t Process with nu=%d:\n",nu))
-    myKernel = KernelClass_TP_SE$new(p = p,w = w) #object
+    myKernel = KernelClass_TP_SE$new(p = p,w = w) #RC object, I now think S3 would be more intuitive
     myKernel$parainit(y,nu);
   } else {
     cat("\nFitting the Gaussian process:\n")
-    myKernel = KernelClass_GP_SE$new(p = p,w = w) #object
+    myKernel = KernelClass_GP_SE$new(p = p,w = w) #RC object, I now think S3 would be more intuitive
     myKernel$parainit(y);
   }
 
