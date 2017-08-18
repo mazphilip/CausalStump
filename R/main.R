@@ -48,11 +48,11 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   #set GP or TP
   if(prior==TRUE){
     cat(sprintf("\nFitting the Student-t Process with nu=%d:\n",nu))
-    myKernel = KernelClass_TP_SE$new(p = p,w = rep(1,n)) #object
+    myKernel = KernelClass_TP_SE$new(p = p,w = w) #object
     myKernel$parainit(y,nu);
   } else {
     cat("\nFitting the Gaussian process:\n")
-    myKernel = KernelClass_GP_SE$new(p = p,w = rep(1,n)) #object
+    myKernel = KernelClass_GP_SE$new(p = p,w = w) #object
     myKernel$parainit(y);
   }
 
