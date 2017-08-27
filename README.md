@@ -3,7 +3,7 @@ This package fits a Gaussian process for treatment effect estimation. It is part
 
 This package can be installed using following command in R:
 ```R
-install.packages("https://github.com/mazphilip/CausalStump/raw/master/tar/CausalStump_0.1.4.tar.gz", repos = NULL, type = "source")
+install.packages("https://github.com/mazphilip/CausalStump/raw/master/tar/CausalStump_0.1.5.tar.gz", repos = NULL, type = "source")
 ```
 
 This package requires the R-packages [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html), [RcppArmadillo](https://cran.r-project.org/web/packages/RcppArmadillo/index.html), and [mvnfast](https://cran.r-project.org/web/packages/mvnfast/index.html) (for the sampling of the student-t posterior).
