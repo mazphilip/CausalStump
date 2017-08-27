@@ -11,6 +11,7 @@
 #' @param tol (default: 1e-4)
 #' @param prior A logic statement (default: FALSE)
 #' @param nu A value (default: 200)
+#' @param nsampling A value (default: 5000) number of samples for prediction
 #' @param learning_rate (default: 0.01)
 #' @param beta1 (default: 0.9)
 #' @param beta2 (default: 0.999)
@@ -31,7 +32,7 @@
 #' Y = Y0*(1-Z) + Y1*Z
 #' mystump <- CausalStump(Y,X,Z)
 
-CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=5000,tol=1e-4,prior=FALSE,nu=200,learning_rate=0.01,beta1=0.9,beta2=0.999,momentum=0.0){
+CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=5000,tol=1e-4,prior=FALSE,nu=200,nsampling=5000,learning_rate=0.01,beta1=0.9,beta2=0.999,momentum=0.0){
   #check dimensionality and class of X
   check_inputs(y,X,z);
   if(!missing(pscore)){ X = cbind(X, pscore); }
@@ -49,11 +50,11 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   #set GP or TP
   if(prior==TRUE){
     cat(sprintf("\nFitting the Student-t Process with nu=%d:\n",nu))
-    myKernel = KernelClass_TP_SE$new(p = p,w = w) #RC object, I now think S3 would be more intuitive
+    myKernel = KernelClass_TP_SE$new(p = p,w = w,nsampling = nsampling)
     myKernel$parainit(y,nu);
   } else {
     cat("\nFitting the Gaussian process:\n")
-    myKernel = KernelClass_GP_SE$new(p = p,w = w) #RC object, I now think S3 would be more intuitive
+    myKernel = KernelClass_GP_SE$new(p = p,w = w)
     myKernel$parainit(y);
   }
 

@@ -73,6 +73,7 @@ KernelClass_GP_SE <- setRefClass("SqExpKernel_GP",
                                    },
                                    predict = function(y,X,z,X2,z2){
                                      n2 = nrow(X2)
+
                                      K_xX = kernel_mat(X2,X,z2,z)$Kmat
                                      K_xx = kernel_mat(X2,X2,z2,z2)$Kmat
 

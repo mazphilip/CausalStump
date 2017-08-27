@@ -1,6 +1,6 @@
 treatment <- function(cs_object, ...)  UseMethod("treatment")
 
-treatment.CausalStump <- function(cs_object,X,pscore){
+treatment.CausalStump <- function(cs_object,X,pscore,nsampling){
   #this function returns the prediction for the fitted Gaussian process
   #only includes calculations with the new data
 
@@ -13,6 +13,13 @@ treatment.CausalStump <- function(cs_object,X,pscore){
     X = norm_variables(X = X,moments = cs_object$moments)$X
   }
   n = nrow(X);
+
+  #overwrite number of samples
+  if(!missing(nsampling)){
+    if(class(cs_object$Kernel)=="SqExpKernel_TP"){
+      cs_object$Kernel$nsampling = nsampling
+    }
+  }
 
   #remaining kernel calculations using the kernel class method
   pred_list = cs_object$Kernel$predict_treat(cs_object$train_data$y,cs_object$train_data$X,cs_object$train_data$z,X)

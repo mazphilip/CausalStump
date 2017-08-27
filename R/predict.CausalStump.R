@@ -4,9 +4,10 @@
 #' @param X A data.frame with new data. If not presented, using the training data.
 #' @param z A vector or scalar with new treatment data. If it is a scalar, it predicts using the same value for all observations. If missing, it uses the training data.
 #' @param pscore A vector with the propensity score. Throws an error if use is different to the CausalStump fit.
+#' @param nsampling (optional) A number that overwrites the number of samples used for the TP-kernel sampling.
 #' @return Returns the MAP and the 95 percent credible interval of the fitted process as a list.
 
-predict.CausalStump <- function(cs_object,X,z,pscore){
+predict.CausalStump <- function(cs_object,X,z,pscore,nsampling){
   #this function returns the prediction for the fitted Gaussian process
   if(missing(X)){
     X = cs_object$train_data$X
@@ -19,6 +20,13 @@ predict.CausalStump <- function(cs_object,X,z,pscore){
   n = nrow(X);
   if(missing(z)){ z = cs_object$train_data$z}
   else { if(length(z)==1){ z = rep(z,n) } }
+
+  #overwrite number of samples
+  if(!missing(nsampling)){
+    if(class(cs_object$Kernel)=="SqExpKernel_TP"){
+      cs_object$Kernel$nsampling = nsampling
+    }
+  }
 
   #remaining kernel calculations using the kernel class method
   pred_list = cs_object$Kernel$predict(cs_object$train_data$y,cs_object$train_data$X,cs_object$train_data$z,X,z)

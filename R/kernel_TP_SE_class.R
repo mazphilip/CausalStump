@@ -5,7 +5,8 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                                Sm = "matrix",
                                                Sa = "matrix",
                                                w = "numeric",
-                                               p = "numeric"),
+                                               p = "numeric",
+                                               nsampling = "numeric"),
                                  methods = list(
                                    parainit = function(y,nu) {
 
@@ -78,13 +79,16 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      cov = S_xx - S_xX %*% invSmatn %*% t(S_xX) + exp(parameters$sigma) * diag(n2) #diag(exp(parameters$sigma) + parameters$sigma_z * z2) )
                                      #in current specification, includes already lamnbda0
 
-                                     N_sample = 10000
 
-                                     TP_samples = mvnfast::rmvt(N_sample, mu = map,  sigma = cov, df = c(exp(parameters$n)),ncores=1)
-                                     #symmetric,
-                                     TP_samples = t(apply(TP_samples, 1, function(x) abs(x-map) ))
+                                     # sampling using symmetry
+                                     U = rep(0,n2)
 
-                                     U = apply(TP_samples,2,sort)[floor(N_sample*0.90),] #floor has a faster convergence as samples denser
+                                     N_sample = 1000
+                                     N_rep  = ceiling(nsampling/N_sample)
+                                     for(j in 1:N_rep){
+                                       TP_samples = mvnfast::rmvt(N_sample, mu = rep(0,n2),  sigma = cov, df = c(exp(parameters$n)),ncores=1)
+                                       U = U + (1/N_rep) * apply(TP_samples,2,sort)[floor(N_sample*0.90),] #90% as now one-sided
+                                     }
 
                                      list(map=map,ci=c(-U,U))
                                    },
@@ -108,8 +112,9 @@ KernelClass_TP_SE <- setRefClass("SqExpKernel_TP",
                                      U = rep(0,n2)
                                      ate_U = 0
 
-                                     N_rep = 100
                                      N_sample = 1000
+                                     N_rep  = ceiling(nsampling/N_sample)
+
                                      for(j in 1:N_rep){
                                        TP_samples_treat = mvnfast::rmvt(N_sample, mu = rep(0,n2),  sigma = cov, df = c(exp(parameters$nu)),ncores=1 )
                                        U = U + (1/N_rep) * apply(TP_samples_treat,2,sort)[floor(N_sample*0.90),] #90% as now one-sided
