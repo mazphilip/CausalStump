@@ -12,7 +12,7 @@ predict.CausalStump <- function(cs_object,X,z,pscore){
     X = cs_object$train_data$X
     }  else {
     if(!missing(pscore)){ X = cbind(X, pscore); }
-    if(nrow(X)!=nrow(cs_object$train_data$X)){ stop("Error: propensity score mismatch", call. = FALSE) }
+    if(ncol(X)!=ncol(cs_object$train_data$X)){ stop("Error: propensity score mismatch", call. = FALSE) }
     #normalize the non-binary variables
     X = norm_variables(X = X,moments = cs_object$moments)$X
     }
