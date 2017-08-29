@@ -32,7 +32,7 @@
 #' Y = Y0*(1-Z) + Y1*Z
 #' mystump <- CausalStump(Y,X,Z)
 
-CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=5000,tol=1e-4,prior=FALSE,nu=200,nsampling=5000,learning_rate=0.01,beta1=0.9,beta2=0.999,momentum=0.0){
+CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=5000,minimumRMSE=FALSE,tol=1e-4,prior=FALSE,nu=200,nsampling=5000,learning_rate=0.01,beta1=0.9,beta2=0.999,momentum=0.0){
   #check dimensionality and class of X
   check_inputs(y,X,z);
   if(!missing(pscore)){ X = cbind(X, pscore); }
@@ -79,7 +79,11 @@ CausalStump <- function(y,X,z,w,pscore,kernelfun="SE",myoptim = "Nadam",maxiter=
   for(iter in 1:maxiter){
     stats[,iter+1] = myKernel$para_update(iter,y,X,z,myOptimizer)
 
+
     #tolerance missing
+    changeRMSE = stats[1,iter+1] - stats[1,iter]
+    if( (minimumRMSE==TRUE) && (changeRMSE>0) && (iter>3) ) { cat(sprintf("Stopped: local RMSE optimum found after %d iterations",iter)); break; }
+
     change = abs(stats[2,iter+1] - stats[2,iter])
     if((change < tol) && (iter > 3)){ cat( sprintf("Stopped: change smaller than tolerance after %d iterations",iter)); break; }
   }
