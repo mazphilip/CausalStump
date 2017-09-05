@@ -9,7 +9,7 @@ install.packages("https://github.com/mazphilip/CausalStump/raw/master/tar/Causal
 This package requires the R-packages [Rcpp](https://cran.r-project.org/web/packages/Rcpp/index.html), [RcppArmadillo](https://cran.r-project.org/web/packages/RcppArmadillo/index.html), and [mvnfast](https://cran.r-project.org/web/packages/mvnfast/index.html) (for the sampling of the student-t posterior).
 
 #  Replicate thesis results
-To replicate my results in my thesis, you can find the simulation files in the test folder. You need the sim.data file of Hill (2011) that is available in the supplement material [here (stable link)](http://dx.doi.org/10.1198/jcgs.2010.08162). 
+To replicate the results in my thesis, you can find the simulation files in the test folder. You need the sim.data file of Hill (2011) that is available in the supplement material [here (stable link)](http://dx.doi.org/10.1198/jcgs.2010.08162). 
 On an AWS c4.8xlarge instance with an [Rstudio AMI](http://www.louisaslett.com/RStudio_AMI/) (set ```export OMP_NUM_THREADS=2```) each file takes between 4-6h.
 Use following package version to run the simulations:
 ```R
