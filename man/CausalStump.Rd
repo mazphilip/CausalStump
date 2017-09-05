@@ -5,9 +5,9 @@
 \title{Fit a Gaussian process or Student-t process to the treatment and control surface.}
 \usage{
 CausalStump(y, X, z, w, pscore, kernelfun = "SE", myoptim = "Nadam",
-  maxiter = 5000, minimumRMSE = FALSE, tol = 1e-04, prior = FALSE,
-  nu = 200, nsampling = 5000, learning_rate = 0.01, beta1 = 0.9,
-  beta2 = 0.999, momentum = 0)
+  maxiter = 5000, tol = 1e-04, prior = FALSE, nu = 200,
+  nsampling = 5000, learning_rate = 0.01, beta1 = 0.9, beta2 = 0.999,
+  momentum = 0)
 }
 \arguments{
 \item{y}{A vector}
