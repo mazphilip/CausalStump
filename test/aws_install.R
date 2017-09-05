@@ -1,0 +1,10 @@
+#install
+install.packages("BayesTree")
+install.packages("Rcpp")
+install.packages("RcppArmadillo")
+install.packages("grf")
+install.packages("rms")
+install.packages("ranger")
+install.packages("foreach")
+install.packages("parallel")
+install.packages("mvnfast")
